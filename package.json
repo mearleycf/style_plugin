@@ -1,0 +1,12 @@
+{
+  "name": "bulk-typography-style-editor",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.97.0",
+    "typescript": "^5.4.0"
+  }
+}

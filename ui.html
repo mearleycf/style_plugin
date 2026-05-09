@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Bulk Typography Style Editor</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --surface: #f5f5f5;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text-muted: #666;
+    --accent: #18a0fb;
+    --accent-hover: #0d8de8;
+    --danger: #f24e1e;
+    --success: #1bc47d;
+    --row-hover: #f0f7ff;
+    --row-selected: #e6f3fe;
+    --font: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    --radius: 4px;
+  }
+
+  body {
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 280px;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-muted);
+  }
+  #searchInput {
+    width: 100%;
+    padding: 5px 8px 5px 28px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 12px;
+    font-family: var(--font);
+    outline: none;
+    background: var(--surface);
+  }
+  #searchInput:focus { border-color: var(--accent); background: #fff; }
+
+  .count-label { color: var(--text-muted); white-space: nowrap; font-size: 11px; }
+
+  .spacer { flex: 1; }
+
+  button {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    padding: 5px 12px;
+    transition: background 0.1s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) { background: var(--surface); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+
+  .btn-danger {
+    background: var(--danger);
+    color: #fff;
+  }
+
+  /* ── Bulk edit bar ── */
+  #bulkBar {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    background: #fffbf0;
+    border-bottom: 1px solid #f0e0b0;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+  #bulkBar.visible { display: flex; }
+  #bulkBar label { color: var(--text-muted); font-size: 11px; }
+  #bulkBar select, #bulkBar input[type="number"], #bulkBar input[type="text"] {
+    font-family: var(--font);
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px 6px;
+    background: #fff;
+    outline: none;
+  }
+  #bulkBar select:focus, #bulkBar input:focus { border-color: var(--accent); }
+
+  /* ── Table area ── */
+  .table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    user-select: none;
+  }
+  thead th.col-check { width: 32px; text-align: center; }
+  thead th.col-name { min-width: 160px; }
+  thead th.col-family { min-width: 120px; }
+  thead th.col-style { min-width: 80px; }
+  thead th.col-size { width: 60px; }
+  thead th.col-lh { width: 72px; }
+  thead th.col-ls { width: 72px; }
+  thead th.col-case { width: 80px; }
+  thead th.col-deco { width: 80px; }
+  thead th.col-status { width: 60px; text-align: center; }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.08s;
+  }
+  tbody tr:hover { background: var(--row-hover); }
+  tbody tr.selected { background: var(--row-selected); }
+  tbody tr.pending td.col-name::after {
+    content: " •";
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  td {
+    padding: 4px 8px;
+    vertical-align: middle;
+    font-size: 12px;
+  }
+  td.col-check { text-align: center; }
+
+  td input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
+
+  td .cell-input {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 2px 4px;
+    background: transparent;
+    outline: none;
+    color: var(--text);
+  }
+  td .cell-input:hover { border-color: var(--border); background: #fff; }
+  td .cell-input:focus { border-color: var(--accent); background: #fff; }
+  td .cell-input.changed { border-color: var(--accent); background: #f0f7ff; }
+
+  td select.cell-input { cursor: pointer; }
+
+  /* status dot */
+  .status-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: transparent;
+  }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.err { background: var(--danger); }
+  .status-dot.pending { background: var(--accent); }
+
+  /* ── Footer ── */
+  .footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+  #statusMsg {
+    font-size: 11px;
+    color: var(--text-muted);
+    flex: 1;
+  }
+  #statusMsg.ok { color: var(--success); }
+  #statusMsg.err { color: var(--danger); }
+
+  /* ── Preview panel ── */
+  #previewPanel {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #previewPanel.visible { display: flex; }
+  .preview-box {
+    background: #fff;
+    border-radius: 6px;
+    width: 560px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  .preview-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+    font-size: 13px;
+  }
+  .preview-header .spacer { flex: 1; }
+  .preview-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 16px;
+  }
+  .preview-item {
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .preview-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .preview-item-name { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+  .preview-change {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .preview-change-key { font-weight: 500; color: var(--text); width: 120px; flex-shrink: 0; }
+  .preview-change-old { color: var(--danger); text-decoration: line-through; }
+  .preview-change-arrow { color: var(--text-muted); }
+  .preview-change-new { color: var(--success); font-weight: 500; }
+  .preview-footer {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Empty / loading states ── */
+  .empty-row td {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 32px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div class="toolbar">
+  <div class="search-wrap">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="7.7" y1="7.7" x2="11" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+    </svg>
+    <input type="text" id="searchInput" placeholder="Search styles…" autocomplete="off" />
+  </div>
+  <span class="count-label" id="countLabel"></span>
+  <div class="spacer"></div>
+  <button class="btn-ghost" id="btnSelectAll">Select all</button>
+  <button class="btn-ghost" id="btnClearSel">Clear</button>
+  <button class="btn-ghost" id="btnReload">Reload</button>
+  <button class="btn-primary" id="btnPreview" disabled>Preview changes</button>
+</div>
+
+<!-- Bulk edit bar -->
+<div id="bulkBar">
+  <label>Bulk edit <strong id="bulkCount">0</strong> selected —</label>
+
+  <label for="bulkFontFamily">Family</label>
+  <input type="text" id="bulkFontFamily" placeholder="e.g. Inter" style="width:100px" />
+
+  <label for="bulkFontStyle">Style</label>
+  <input type="text" id="bulkFontStyle" placeholder="e.g. Regular" style="width:80px" />
+
+  <label for="bulkFontSize">Size</label>
+  <input type="number" id="bulkFontSize" placeholder="–" min="1" max="999" style="width:52px" />
+
+  <label for="bulkCase">Case</label>
+  <select id="bulkCase">
+    <option value="">–</option>
+    <option value="ORIGINAL">Original</option>
+    <option value="UPPER">UPPER</option>
+    <option value="LOWER">lower</option>
+    <option value="TITLE">Title</option>
+    <option value="SMALL_CAPS">Small Caps</option>
+    <option value="SMALL_CAPS_FORCED">Small Caps Forced</option>
+  </select>
+
+  <button class="btn-ghost" id="btnApplyBulk" style="margin-left:4px">Apply to selected</button>
+</div>
+
+<!-- Table -->
+<div class="table-wrap">
+  <table id="stylesTable">
+    <thead>
+      <tr>
+        <th class="col-check"><input type="checkbox" id="headerCheck" title="Select/deselect all visible" /></th>
+        <th class="col-name">Name</th>
+        <th class="col-family">Font Family</th>
+        <th class="col-style">Font Style</th>
+        <th class="col-size">Size</th>
+        <th class="col-lh">Line Height</th>
+        <th class="col-ls">Letter Spacing</th>
+        <th class="col-case">Case</th>
+        <th class="col-deco">Decoration</th>
+        <th class="col-status"></th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr class="empty-row"><td colspan="10">Loading styles…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span id="statusMsg"></span>
+  <div class="spacer"></div>
+  <button class="btn-ghost" id="btnDiscardAll" disabled>Discard all changes</button>
+  <button class="btn-primary" id="btnApplyAll" disabled>Apply changes</button>
+</div>
+
+<!-- Preview panel (modal) -->
+<div id="previewPanel">
+  <div class="preview-box">
+    <div class="preview-header">
+      Preview pending changes
+      <div class="spacer"></div>
+      <button class="btn-ghost" id="btnClosePreview">✕</button>
+    </div>
+    <div class="preview-body" id="previewBody"></div>
+    <div class="preview-footer">
+      <button class="btn-ghost" id="btnCancelApply">Cancel</button>
+      <button class="btn-primary" id="btnConfirmApply">Apply all changes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  /** @type {Map<string, object>} id → original snapshot */
+  const originals = new Map();
+  /** @type {Map<string, object>} id → pending edits (partial) */
+  const edits = new Map();
+  /** @type {Set<string>} selected style IDs */
+  const selected = new Set();
+  /** @type {string[]} currently visible (filtered) style IDs in order */
+  let visibleIds = [];
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const searchInput   = document.getElementById('searchInput');
+  const countLabel    = document.getElementById('countLabel');
+  const btnSelectAll  = document.getElementById('btnSelectAll');
+  const btnClearSel   = document.getElementById('btnClearSel');
+  const btnReload     = document.getElementById('btnReload');
+  const btnPreview    = document.getElementById('btnPreview');
+  const bulkBar       = document.getElementById('bulkBar');
+  const bulkCount     = document.getElementById('bulkCount');
+  const bulkFontFamily= document.getElementById('bulkFontFamily');
+  const bulkFontStyle = document.getElementById('bulkFontStyle');
+  const bulkFontSize  = document.getElementById('bulkFontSize');
+  const bulkCase      = document.getElementById('bulkCase');
+  const btnApplyBulk  = document.getElementById('btnApplyBulk');
+  const tableBody     = document.getElementById('tableBody');
+  const headerCheck   = document.getElementById('headerCheck');
+  const statusMsg     = document.getElementById('statusMsg');
+  const btnDiscardAll = document.getElementById('btnDiscardAll');
+  const btnApplyAll   = document.getElementById('btnApplyAll');
+  const previewPanel  = document.getElementById('previewPanel');
+  const previewBody   = document.getElementById('previewBody');
+  const btnClosePreview = document.getElementById('btnClosePreview');
+  const btnCancelApply  = document.getElementById('btnCancelApply');
+  const btnConfirmApply = document.getElementById('btnConfirmApply');
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function formatLineHeight(lh) {
+    if (!lh) return '–';
+    if (lh.unit === 'AUTO') return 'Auto';
+    if (lh.unit === 'PERCENT') return lh.value.toFixed(0) + '%';
+    return lh.value.toFixed(0) + 'px';
+  }
+
+  function formatLetterSpacing(ls) {
+    if (!ls) return '–';
+    if (ls.unit === 'PERCENT') return ls.value.toFixed(1) + '%';
+    return ls.value.toFixed(1) + 'px';
+  }
+
+  function textCaseLabel(tc) {
+    const map = {
+      ORIGINAL: 'Original', UPPER: 'UPPER', LOWER: 'lower',
+      TITLE: 'Title', SMALL_CAPS: 'Small Caps', SMALL_CAPS_FORCED: 'Sm Caps+'
+    };
+    return map[tc] || tc;
+  }
+
+  function textDecoLabel(td) {
+    const map = {
+      NONE: 'None', UNDERLINE: 'Underline', STRIKETHROUGH: 'Strikethrough',
+      UNDERLINE_AND_STRIKETHROUGH: 'Both'
+    };
+    return map[td] || td;
+  }
+
+  function getEffective(id, field) {
+    const e = edits.get(id);
+    const o = originals.get(id);
+    if (e && field in e) return e[field];
+    return o ? o[field] : undefined;
+  }
+
+  function setEdit(id, field, value) {
+    const o = originals.get(id);
+    if (!o) return;
+
+    const entry = edits.get(id) || {};
+
+    // Compare with original — if equal, remove from edits
+    const orig = o[field];
+    const same = JSON.stringify(orig) === JSON.stringify(value);
+
+    if (same) {
+      delete entry[field];
+    } else {
+      entry[field] = value;
+    }
+
+    if (Object.keys(entry).length === 0) {
+      edits.delete(id);
+    } else {
+      edits.set(id, entry);
+    }
+
+    updateFooterButtons();
+    updateRowPendingState(id);
+  }
+
+  function pendingEditsCount() {
+    return edits.size;
+  }
+
+  function updateFooterButtons() {
+    const hasPending = pendingEditsCount() > 0;
+    btnPreview.disabled = !hasPending;
+    btnApplyAll.disabled = !hasPending;
+    btnDiscardAll.disabled = !hasPending;
+  }
+
+  function updateRowPendingState(id) {
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (!row) return;
+    const isPending = edits.has(id);
+    row.classList.toggle('pending', isPending);
+    const dot = row.querySelector('.status-dot');
+    if (dot) {
+      dot.className = 'status-dot' + (isPending ? ' pending' : '');
+      dot.title = isPending ? 'Unsaved changes' : '';
+    }
+    // Update changed state on inputs
+    row.querySelectorAll('.cell-input[data-field]').forEach(input => {
+      const field = input.dataset.field;
+      const e = edits.get(id);
+      input.classList.toggle('changed', !!(e && field in e));
+    });
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
+  function renderTable() {
+    const query = searchInput.value.trim().toLowerCase();
+    visibleIds = [];
+
+    const allIds = [...originals.keys()];
+    const filtered = query
+      ? allIds.filter(id => {
+          const s = originals.get(id);
+          return s.name.toLowerCase().includes(query);
+        })
+      : allIds;
+
+    visibleIds = filtered;
+    countLabel.textContent = query
+      ? `${filtered.length} of ${allIds.length} styles`
+      : `${allIds.length} style${allIds.length !== 1 ? 's' : ''}`;
+
+    if (filtered.length === 0) {
+      tableBody.innerHTML = `<tr class="empty-row"><td colspan="10">${
+        query ? 'No styles match your search.' : 'No local text styles found in this file.'
+      }</td></tr>`;
+      headerCheck.indeterminate = false;
+      headerCheck.checked = false;
+      return;
+    }
+
+    const rows = filtered.map(id => buildRow(id)).join('');
+    tableBody.innerHTML = rows;
+
+    // Restore checkbox states
+    filtered.forEach(id => {
+      const cb = tableBody.querySelector(`tr[data-id="${id}"] input[type="checkbox"]`);
+      if (cb) cb.checked = selected.has(id);
+    });
+
+    updateHeaderCheckbox();
+    attachCellListeners();
+  }
+
+  function buildRow(id) {
+    const sel = selected.has(id) ? 'selected' : '';
+    const pending = edits.has(id) ? 'pending' : '';
+    const dotClass = edits.has(id) ? 'status-dot pending' : 'status-dot';
+    const dotTitle = edits.has(id) ? 'Unsaved changes' : '';
+
+    const name       = getEffective(id, 'name') || '';
+    const family     = getEffective(id, 'fontName')?.family || '';
+    const fontStyle  = getEffective(id, 'fontName')?.style || '';
+    const fontSize   = getEffective(id, 'fontSize') || '';
+    const lineHeight = formatLineHeight(getEffective(id, 'lineHeight'));
+    const letterSpacing = formatLetterSpacing(getEffective(id, 'letterSpacing'));
+    const textCase   = getEffective(id, 'textCase') || 'ORIGINAL';
+    const textDeco   = getEffective(id, 'textDecoration') || 'NONE';
+
+    const nameChanged   = edits.has(id) && 'name' in edits.get(id) ? 'changed' : '';
+    const familyChanged = edits.has(id) && 'fontName' in edits.get(id) ? 'changed' : '';
+    const sizeChanged   = edits.has(id) && 'fontSize' in edits.get(id) ? 'changed' : '';
+    const caseChanged   = edits.has(id) && 'textCase' in edits.get(id) ? 'changed' : '';
+    const decoChanged   = edits.has(id) && 'textDecoration' in edits.get(id) ? 'changed' : '';
+
+    const caseOptions = ['ORIGINAL','UPPER','LOWER','TITLE','SMALL_CAPS','SMALL_CAPS_FORCED']
+      .map(v => `<option value="${v}"${textCase === v ? ' selected' : ''}>${textCaseLabel(v)}</option>`)
+      .join('');
+
+    const decoOptions = ['NONE','UNDERLINE','STRIKETHROUGH','UNDERLINE_AND_STRIKETHROUGH']
+      .map(v => `<option value="${v}"${textDeco === v ? ' selected' : ''}>${textDecoLabel(v)}</option>`)
+      .join('');
+
+    return `<tr data-id="${id}" class="${sel} ${pending}">
+      <td class="col-check"><input type="checkbox" class="row-check" /></td>
+      <td class="col-name"><input class="cell-input ${nameChanged}" data-field="name" data-id="${id}" value="${escHtml(name)}" /></td>
+      <td class="col-family"><input class="cell-input ${familyChanged}" data-field="fontFamily" data-id="${id}" value="${escHtml(family)}" /></td>
+      <td class="col-style"><input class="cell-input ${familyChanged}" data-field="fontStyleVal" data-id="${id}" value="${escHtml(fontStyle)}" /></td>
+      <td class="col-size"><input class="cell-input ${sizeChanged}" data-field="fontSize" data-id="${id}" type="number" min="1" max="999" value="${fontSize}" /></td>
+      <td class="col-lh">${escHtml(lineHeight)}</td>
+      <td class="col-ls">${escHtml(letterSpacing)}</td>
+      <td class="col-case"><select class="cell-input ${caseChanged}" data-field="textCase" data-id="${id}">${caseOptions}</select></td>
+      <td class="col-deco"><select class="cell-input ${decoChanged}" data-field="textDecoration" data-id="${id}">${decoOptions}</select></td>
+      <td class="col-status" style="text-align:center"><span class="${dotClass}" title="${dotTitle}"></span></td>
+    </tr>`;
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  // ── Cell event listeners ──────────────────────────────────────────────────
+  function attachCellListeners() {
+    tableBody.querySelectorAll('.row-check').forEach(cb => {
+      cb.addEventListener('change', onRowCheckChange);
+    });
+
+    tableBody.querySelectorAll('.cell-input').forEach(input => {
+      input.addEventListener('change', onCellChange);
+    });
+
+    tableBody.querySelectorAll('tr[data-id]').forEach(row => {
+      row.addEventListener('click', onRowClick);
+    });
+  }
+
+  function onRowClick(e) {
+    // Only toggle selection when clicking the row background, not inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const id = e.currentTarget.dataset.id;
+    toggleSelected(id);
+  }
+
+  function onRowCheckChange(e) {
+    const row = e.target.closest('tr[data-id]');
+    const id = row.dataset.id;
+    if (e.target.checked) {
+      selected.add(id);
+      row.classList.add('selected');
+    } else {
+      selected.delete(id);
+      row.classList.remove('selected');
+    }
+    updateHeaderCheckbox();
+    updateBulkBar();
+  }
+
+  function toggleSelected(id) {
+    const row = document.querySelector(`tr[data-id="${id}"]`);
+    if (!row) return;
+    const cb = row.querySelector('.row-check');
+    if (selected.has(id)) {
+      selected.delete(id);
+      row.classList.remove('selected');
+      if (cb) cb.checked = false;
+    } else {
+      selected.add(id);
+      row.classList.add('selected');
+      if (cb) cb.checked = true;
+    }
+    updateHeaderCheckbox();
+    updateBulkBar();
+  }
+
+  function onCellChange(e) {
+    const input = e.target;
+    const id = input.dataset.id;
+    const field = input.dataset.field;
+    if (!id || !field) return;
+
+    if (field === 'name') {
+      setEdit(id, 'name', input.value.trim());
+    } else if (field === 'fontSize') {
+      const v = parseFloat(input.value);
+      if (!isNaN(v) && v > 0) setEdit(id, 'fontSize', v);
+    } else if (field === 'fontFamily' || field === 'fontStyleVal') {
+      // Font family and style are grouped under fontName
+      const currentFontName = getEffective(id, 'fontName') || {};
+      const family = field === 'fontFamily'
+        ? input.value.trim()
+        : currentFontName.family || '';
+      const style = field === 'fontStyleVal'
+        ? input.value.trim()
+        : currentFontName.style || '';
+      if (family && style) {
+        setEdit(id, 'fontName', { family, style });
+      }
+    } else if (field === 'textCase') {
+      setEdit(id, 'textCase', input.value);
+    } else if (field === 'textDecoration') {
+      setEdit(id, 'textDecoration', input.value);
+    }
+  }
+
+  // ── Header checkbox ───────────────────────────────────────────────────────
+  function updateHeaderCheckbox() {
+    const visibleSelected = visibleIds.filter(id => selected.has(id)).length;
+    if (visibleSelected === 0) {
+      headerCheck.checked = false;
+      headerCheck.indeterminate = false;
+    } else if (visibleSelected === visibleIds.length) {
+      headerCheck.checked = true;
+      headerCheck.indeterminate = false;
+    } else {
+      headerCheck.checked = false;
+      headerCheck.indeterminate = true;
+    }
+  }
+
+  headerCheck.addEventListener('change', () => {
+    if (headerCheck.checked) {
+      visibleIds.forEach(id => selected.add(id));
+    } else {
+      visibleIds.forEach(id => selected.delete(id));
+    }
+    renderTable();
+    updateBulkBar();
+  });
+
+  // ── Bulk bar ──────────────────────────────────────────────────────────────
+  function updateBulkBar() {
+    const count = selected.size;
+    bulkCount.textContent = count;
+    if (count > 0) {
+      bulkBar.classList.add('visible');
+    } else {
+      bulkBar.classList.remove('visible');
+    }
+  }
+
+  btnApplyBulk.addEventListener('click', () => {
+    const family = bulkFontFamily.value.trim();
+    const style  = bulkFontStyle.value.trim();
+    const size   = parseFloat(bulkFontSize.value);
+    const tc     = bulkCase.value;
+
+    selected.forEach(id => {
+      if (family || style) {
+        const current = getEffective(id, 'fontName') || {};
+        setEdit(id, 'fontName', {
+          family: family || current.family || '',
+          style:  style  || current.style  || '',
+        });
+      }
+      if (!isNaN(size) && size > 0) setEdit(id, 'fontSize', size);
+      if (tc) setEdit(id, 'textCase', tc);
+    });
+
+    // Clear bulk inputs
+    bulkFontFamily.value = '';
+    bulkFontStyle.value  = '';
+    bulkFontSize.value   = '';
+    bulkCase.value       = '';
+
+    renderTable();
+  });
+
+  // ── Preview ───────────────────────────────────────────────────────────────
+  function buildPreview() {
+    if (edits.size === 0) return;
+
+    const items = [];
+    edits.forEach((changes, id) => {
+      const orig = originals.get(id);
+      if (!orig) return;
+
+      const changeLines = [];
+      Object.keys(changes).forEach(field => {
+        const oldVal = formatValue(field, orig[field], orig);
+        const newVal = formatValue(field, changes[field], orig);
+        changeLines.push({ field, oldVal, newVal });
+      });
+
+      items.push({ name: orig.name, changeLines });
+    });
+
+    previewBody.innerHTML = items.map(item => `
+      <div class="preview-item">
+        <div class="preview-item-name">${escHtml(item.name)}</div>
+        ${item.changeLines.map(cl => `
+          <div class="preview-change">
+            <span class="preview-change-key">${escHtml(fieldLabel(cl.field))}</span>
+            <span class="preview-change-old">${escHtml(cl.oldVal)}</span>
+            <span class="preview-change-arrow">→</span>
+            <span class="preview-change-new">${escHtml(cl.newVal)}</span>
+          </div>
+        `).join('')}
+      </div>
+    `).join('');
+
+    previewPanel.classList.add('visible');
+  }
+
+  function fieldLabel(field) {
+    const map = {
+      name: 'Name', fontSize: 'Font Size', fontName: 'Font',
+      letterSpacing: 'Letter Spacing', lineHeight: 'Line Height',
+      paragraphIndent: 'Paragraph Indent', paragraphSpacing: 'Paragraph Spacing',
+      textCase: 'Text Case', textDecoration: 'Decoration',
+    };
+    return map[field] || field;
+  }
+
+  function formatValue(field, val, orig) {
+    if (val === undefined || val === null) return '–';
+    if (field === 'fontName') return `${val.family} ${val.style}`;
+    if (field === 'lineHeight') return formatLineHeight(val);
+    if (field === 'letterSpacing') return formatLetterSpacing(val);
+    if (field === 'fontSize') return `${val}px`;
+    if (field === 'textCase') return textCaseLabel(val);
+    if (field === 'textDecoration') return textDecoLabel(val);
+    return String(val);
+  }
+
+  btnPreview.addEventListener('click', buildPreview);
+  btnClosePreview.addEventListener('click', () => previewPanel.classList.remove('visible'));
+  btnCancelApply.addEventListener('click', () => previewPanel.classList.remove('visible'));
+  btnConfirmApply.addEventListener('click', () => {
+    previewPanel.classList.remove('visible');
+    sendApply();
+  });
+
+  // ── Apply / Discard ───────────────────────────────────────────────────────
+  btnApplyAll.addEventListener('click', sendApply);
+
+  function sendApply() {
+    if (edits.size === 0) return;
+
+    const editsList = [];
+    edits.forEach((changes, id) => {
+      editsList.push({ id, changes });
+    });
+
+    setStatus('Applying changes…', '');
+    btnApplyAll.disabled = true;
+    btnDiscardAll.disabled = true;
+
+    parent.postMessage({ pluginMessage: { type: 'apply-changes', edits: editsList } }, '*');
+  }
+
+  btnDiscardAll.addEventListener('click', () => {
+    edits.clear();
+    updateFooterButtons();
+    renderTable();
+    setStatus('All changes discarded.', '');
+  });
+
+  // ── Toolbar actions ───────────────────────────────────────────────────────
+  btnSelectAll.addEventListener('click', () => {
+    visibleIds.forEach(id => selected.add(id));
+    renderTable();
+    updateBulkBar();
+  });
+
+  btnClearSel.addEventListener('click', () => {
+    selected.clear();
+    renderTable();
+    updateBulkBar();
+  });
+
+  btnReload.addEventListener('click', () => {
+    originals.clear();
+    edits.clear();
+    selected.clear();
+    visibleIds = [];
+    tableBody.innerHTML = '<tr class="empty-row"><td colspan="10">Loading styles…</td></tr>';
+    setStatus('', '');
+    updateFooterButtons();
+    updateBulkBar();
+    parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
+  });
+
+  searchInput.addEventListener('input', () => {
+    renderTable();
+  });
+
+  // ── Status ────────────────────────────────────────────────────────────────
+  function setStatus(msg, type) {
+    statusMsg.textContent = msg;
+    statusMsg.className = type || '';
+  }
+
+  // ── Message handler (from plugin controller) ──────────────────────────────
+  window.onmessage = (event) => {
+    const msg = event.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === 'styles-loaded') {
+      originals.clear();
+      edits.clear();
+
+      msg.styles.forEach(s => originals.set(s.id, s));
+      renderTable();
+      setStatus('', '');
+      updateBulkBar();
+      updateFooterButtons();
+
+    } else if (msg.type === 'apply-results') {
+      const results = msg.results;
+      let okCount = 0;
+      let failCount = 0;
+
+      results.forEach(r => {
+        if (r.ok) {
+          okCount++;
+          // Refresh the original to reflect what was saved
+          const e = edits.get(r.id);
+          if (e) {
+            const orig = originals.get(r.id);
+            if (orig) {
+              Object.assign(orig, e);
+            }
+            edits.delete(r.id);
+          }
+          // Update status dot to success
+          const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
+          if (dot) { dot.className = 'status-dot ok'; dot.title = 'Applied'; }
+          const row = document.querySelector(`tr[data-id="${r.id}"]`);
+          if (row) row.classList.remove('pending');
+        } else {
+          failCount++;
+          const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
+          if (dot) { dot.className = 'status-dot err'; dot.title = r.error || 'Error'; }
+        }
+      });
+
+      updateFooterButtons();
+
+      if (failCount === 0) {
+        setStatus(`✓ Applied ${okCount} change${okCount !== 1 ? 's' : ''} successfully.`, 'ok');
+      } else {
+        setStatus(`⚠ ${okCount} succeeded, ${failCount} failed. Check red dots.`, 'err');
+      }
+
+    } else if (msg.type === 'error') {
+      setStatus('Error: ' + msg.message, 'err');
+    }
+  };
+
+  // ── Boot ──────────────────────────────────────────────────────────────────
+  parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
+})();
+</script>
+</body>
+</html>
