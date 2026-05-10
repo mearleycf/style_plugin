@@ -1,5 +1,5 @@
 "use strict";
-// Plugin controller — runs in Figma's sandbox (no DOM access)
+/// <reference path="./node_modules/@figma/plugin-typings/index.d.ts" />
 function snapshotStyle(style) {
     return {
         id: style.id,

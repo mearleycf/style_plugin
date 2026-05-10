@@ -1,3 +1,5 @@
+/// <reference path="./node_modules/@figma/plugin-typings/index.d.ts" />
+
 // Plugin controller — runs in Figma's sandbox (no DOM access)
 
 interface StyleSnapshot {

@@ -4,8 +4,7 @@
     "lib": ["ES2017"],
     "strict": true,
     "moduleResolution": "node",
-    "noEmit": false,
-    "typeRoots": ["./node_modules/@figma", "./node_modules/@types"]
+    "noEmit": false
   },
   "include": ["code.ts"]
 }
