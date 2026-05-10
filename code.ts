@@ -25,12 +25,16 @@ interface ApplyResult {
   error?: string;
 }
 
+interface FontMap {
+  [family: string]: string[];
+}
+
 type PluginMessage =
   | { type: "load-styles" }
   | { type: "apply-changes"; edits: PendingEdit[] };
 
 type UIMessage =
-  | { type: "styles-loaded"; styles: StyleSnapshot[] }
+  | { type: "styles-loaded"; styles: StyleSnapshot[]; fonts: FontMap }
   | { type: "apply-results"; results: ApplyResult[] }
   | { type: "error"; message: string };
 
@@ -51,9 +55,21 @@ function snapshotStyle(style: TextStyle): StyleSnapshot {
 
 async function loadStyles(): Promise<void> {
   try {
-    const styles = await figma.getLocalTextStylesAsync();
+    const [styles, availableFonts] = await Promise.all([
+      figma.getLocalTextStylesAsync(),
+      figma.listAvailableFontsAsync(),
+    ]);
+
     const snapshots: StyleSnapshot[] = styles.map(snapshotStyle);
-    const msg: UIMessage = { type: "styles-loaded", styles: snapshots };
+
+    const fonts: FontMap = {};
+    for (const font of availableFonts) {
+      const { family, style } = font.fontName;
+      if (!fonts[family]) fonts[family] = [];
+      fonts[family].push(style);
+    }
+
+    const msg: UIMessage = { type: "styles-loaded", styles: snapshots, fonts };
     figma.ui.postMessage(msg);
   } catch (err) {
     const msg: UIMessage = {
@@ -114,7 +130,9 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
   figma.ui.postMessage(msg);
 }
 
-figma.showUI(__html__, { width: 720, height: 540, title: "Bulk Typography Style Editor" });
+// resizable was added after the installed typings version; cast is safe
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+figma.showUI(__html__, { width: 720, height: 540, title: "Bulk Typography Style Editor", resizable: true } as any);
 
 figma.ui.onmessage = (raw: unknown) => {
   const msg = raw as PluginMessage;

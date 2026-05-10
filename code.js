@@ -16,9 +16,19 @@ function snapshotStyle(style) {
 }
 async function loadStyles() {
     try {
-        const styles = await figma.getLocalTextStylesAsync();
+        const [styles, availableFonts] = await Promise.all([
+            figma.getLocalTextStylesAsync(),
+            figma.listAvailableFontsAsync(),
+        ]);
         const snapshots = styles.map(snapshotStyle);
-        const msg = { type: "styles-loaded", styles: snapshots };
+        const fonts = {};
+        for (const font of availableFonts) {
+            const { family, style } = font.fontName;
+            if (!fonts[family])
+                fonts[family] = [];
+            fonts[family].push(style);
+        }
+        const msg = { type: "styles-loaded", styles: snapshots, fonts };
         figma.ui.postMessage(msg);
     }
     catch (err) {
@@ -79,7 +89,9 @@ async function applyChanges(edits) {
     const msg = { type: "apply-results", results };
     figma.ui.postMessage(msg);
 }
-figma.showUI(__html__, { width: 720, height: 540, title: "Bulk Typography Style Editor" });
+// resizable was added after the installed typings version; cast is safe
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+figma.showUI(__html__, { width: 720, height: 540, title: "Bulk Typography Style Editor", resizable: true });
 figma.ui.onmessage = (raw) => {
     const msg = raw;
     if (msg.type === "load-styles") {
