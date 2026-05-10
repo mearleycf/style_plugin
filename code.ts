@@ -130,9 +130,11 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
   figma.ui.postMessage(msg);
 }
 
-// resizable was added after the installed typings version; cast is safe
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-figma.showUI(__html__, { width: 720, height: 540, title: "Bulk Typography Style Editor", resizable: true } as any);
+figma.showUI(__html__, {
+  width: 720,
+  height: 540,
+  title: "Bulk Typography Style Editor",
+});
 
 figma.ui.onmessage = (raw: unknown) => {
   const msg = raw as PluginMessage;
