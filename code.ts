@@ -33,7 +33,8 @@ interface FontMap {
 
 type PluginMessage =
   | { type: "load-styles" }
-  | { type: "apply-changes"; edits: PendingEdit[] };
+  | { type: "apply-changes"; edits: PendingEdit[] }
+  | { type: "resize"; width: number; height: number };
 
 type UIMessage =
   | { type: "styles-loaded"; styles: StyleSnapshot[]; fonts: FontMap }
@@ -142,5 +143,7 @@ figma.ui.onmessage = (raw: unknown) => {
     loadStyles();
   } else if (msg.type === "apply-changes") {
     applyChanges(msg.edits);
+  } else if (msg.type === "resize") {
+    figma.ui.resize(msg.width, msg.height);
   }
 };

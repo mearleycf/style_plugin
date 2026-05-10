@@ -100,4 +100,7 @@ figma.ui.onmessage = (raw) => {
     else if (msg.type === "apply-changes") {
         applyChanges(msg.edits);
     }
+    else if (msg.type === "resize") {
+        figma.ui.resize(msg.width, msg.height);
+    }
 };
