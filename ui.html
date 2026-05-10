@@ -100,11 +100,6 @@
   }
   .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
 
-  .btn-danger {
-    background: var(--danger);
-    color: #fff;
-  }
-
   /* ── Bulk edit bar ── */
   #bulkBar {
     display: none;
@@ -128,6 +123,11 @@
     outline: none;
   }
   #bulkBar select:focus, #bulkBar input:focus { border-color: var(--accent); }
+  #bulkBar input:disabled, #bulkBar select:disabled {
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
 
   /* ── Table area ── */
   .table-wrap {
@@ -137,9 +137,9 @@
   }
 
   table {
-    width: 100%;
     border-collapse: collapse;
-    min-width: 680px;
+    table-layout: fixed;
+    /* width set by JS via applyColWidths() */
   }
 
   thead th {
@@ -154,18 +154,24 @@
     font-size: 11px;
     color: var(--text-muted);
     white-space: nowrap;
+    overflow: hidden;
     user-select: none;
   }
-  thead th.col-check { width: 32px; text-align: center; }
-  thead th.col-name { min-width: 160px; }
-  thead th.col-family { min-width: 120px; }
-  thead th.col-style { min-width: 80px; }
-  thead th.col-size { width: 60px; }
-  thead th.col-lh { width: 72px; }
-  thead th.col-ls { width: 72px; }
-  thead th.col-case { width: 80px; }
-  thead th.col-deco { width: 80px; }
-  thead th.col-status { width: 60px; text-align: center; }
+  thead th.col-check { text-align: center; padding: 6px 4px; }
+  thead th.col-state { padding: 0; }
+
+  /* Column resize handle */
+  .col-resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+    cursor: col-resize;
+    z-index: 2;
+  }
+  .col-resizer:hover { background: var(--accent); opacity: 0.5; }
+  .col-resizer.dragging { background: var(--accent); opacity: 0.7; }
 
   tbody tr {
     border-bottom: 1px solid var(--border);
@@ -173,7 +179,7 @@
   }
   tbody tr:hover { background: var(--row-hover); }
   tbody tr.selected { background: var(--row-selected); }
-  tbody tr.pending td.col-name::after {
+  tbody tr.pending td.col-name .cell-name-wrap::after {
     content: " •";
     color: var(--accent);
     font-weight: 700;
@@ -183,8 +189,10 @@
     padding: 4px 8px;
     vertical-align: middle;
     font-size: 12px;
+    overflow: hidden;
   }
-  td.col-check { text-align: center; }
+  td.col-check { text-align: center; padding: 4px; }
+  td.col-state { text-align: center; padding: 4px 0; }
 
   td input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
 
@@ -202,19 +210,49 @@
   td .cell-input:hover { border-color: var(--border); background: #fff; }
   td .cell-input:focus { border-color: var(--accent); background: #fff; }
   td .cell-input.changed { border-color: var(--accent); background: #f0f7ff; }
-
   td select.cell-input { cursor: pointer; }
 
-  /* status dot */
+  /* Status dot in col-state */
   .status-dot {
     display: inline-block;
     width: 8px; height: 8px;
     border-radius: 50%;
     background: transparent;
+    cursor: default;
   }
-  .status-dot.ok { background: var(--success); }
-  .status-dot.err { background: var(--danger); }
+  .status-dot.ok      { background: var(--success); }
+  .status-dot.err     { background: var(--danger); cursor: help; }
   .status-dot.pending { background: var(--accent); }
+
+  /* ── Error detail panel ── */
+  #errorPanel {
+    display: none;
+    flex-shrink: 0;
+    background: #fff5f5;
+    border-top: 2px solid var(--danger);
+    padding: 8px 12px;
+    max-height: 130px;
+    overflow-y: auto;
+  }
+  .error-panel-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+  .error-panel-title {
+    font-weight: 600;
+    font-size: 11px;
+    color: var(--danger);
+    flex: 1;
+  }
+  .error-list-item {
+    font-size: 11px;
+    padding: 2px 0;
+    line-height: 1.5;
+  }
+  .error-list-item .err-name { font-weight: 600; color: var(--text); }
+  .error-list-item .err-msg  { color: var(--text-muted); }
 
   /* ── Footer ── */
   .footer {
@@ -231,7 +269,7 @@
     color: var(--text-muted);
     flex: 1;
   }
-  #statusMsg.ok { color: var(--success); }
+  #statusMsg.ok  { color: var(--success); }
   #statusMsg.err { color: var(--danger); }
 
   /* ── Preview panel ── */
@@ -285,7 +323,6 @@
   }
   .preview-change-key { font-weight: 500; color: var(--text); width: 120px; flex-shrink: 0; }
   .preview-change-old { color: var(--danger); text-decoration: line-through; }
-  .preview-change-arrow { color: var(--text-muted); }
   .preview-change-new { color: var(--success); font-weight: 500; }
   .preview-footer {
     display: flex;
@@ -295,7 +332,7 @@
     border-top: 1px solid var(--border);
   }
 
-  /* ── Empty / loading states ── */
+  /* ── Empty / loading ── */
   .empty-row td {
     text-align: center;
     color: var(--text-muted);
@@ -330,8 +367,10 @@
   <label for="bulkFontFamily">Family</label>
   <input type="text" id="bulkFontFamily" placeholder="e.g. Inter" style="width:100px" />
 
-  <label for="bulkFontStyle">Style</label>
-  <input type="text" id="bulkFontStyle" placeholder="e.g. Regular" style="width:80px" />
+  <label>Style</label>
+  <span id="bulkFontStyleWrap">
+    <input type="text" id="bulkFontStyle" placeholder="–" style="width:100px" disabled />
+  </span>
 
   <label for="bulkFontSize">Size</label>
   <input type="number" id="bulkFontSize" placeholder="–" min="1" max="999" style="width:52px" />
@@ -353,24 +392,45 @@
 <!-- Table -->
 <div class="table-wrap">
   <table id="stylesTable">
+    <colgroup id="colgroup">
+      <col /><!-- 0: check    32px -->
+      <col /><!-- 1: state    28px -->
+      <col /><!-- 2: name    150px -->
+      <col /><!-- 3: family  130px -->
+      <col /><!-- 4: style    90px -->
+      <col /><!-- 5: size     65px -->
+      <col /><!-- 6: lh       75px -->
+      <col /><!-- 7: ls       75px -->
+      <col /><!-- 8: case     85px -->
+      <col /><!-- 9: deco     95px -->
+    </colgroup>
     <thead>
       <tr>
         <th class="col-check"><input type="checkbox" id="headerCheck" title="Select/deselect all visible" /></th>
-        <th class="col-name">Name</th>
-        <th class="col-family">Font Family</th>
-        <th class="col-style">Font Style</th>
-        <th class="col-size">Size</th>
-        <th class="col-lh">Line Height</th>
-        <th class="col-ls">Letter Spacing</th>
-        <th class="col-case">Case</th>
-        <th class="col-deco">Decoration</th>
-        <th class="col-status"></th>
+        <th class="col-state"></th>
+        <th class="col-name">Name<span class="col-resizer" data-col-idx="2"></span></th>
+        <th class="col-family">Font Family<span class="col-resizer" data-col-idx="3"></span></th>
+        <th class="col-style">Font Style<span class="col-resizer" data-col-idx="4"></span></th>
+        <th class="col-size">Size<span class="col-resizer" data-col-idx="5"></span></th>
+        <th class="col-lh">Line Height<span class="col-resizer" data-col-idx="6"></span></th>
+        <th class="col-ls">Letter Spacing<span class="col-resizer" data-col-idx="7"></span></th>
+        <th class="col-case">Case<span class="col-resizer" data-col-idx="8"></span></th>
+        <th class="col-deco">Decoration<span class="col-resizer" data-col-idx="9"></span></th>
       </tr>
     </thead>
     <tbody id="tableBody">
       <tr class="empty-row"><td colspan="10">Loading styles…</td></tr>
     </tbody>
   </table>
+</div>
+
+<!-- Error detail panel -->
+<div id="errorPanel">
+  <div class="error-panel-header">
+    <span class="error-panel-title">Apply errors — hover the red dot on any row for a quick tooltip, or read below:</span>
+    <button class="btn-ghost" id="btnDismissErrors" style="padding:2px 8px;font-size:11px">Dismiss</button>
+  </div>
+  <div id="errorList"></div>
 </div>
 
 <!-- Footer -->
@@ -404,37 +464,55 @@
   // ── State ─────────────────────────────────────────────────────────────────
   /** @type {Map<string, object>} id → original snapshot */
   const originals = new Map();
-  /** @type {Map<string, object>} id → pending edits (partial) */
+  /** @type {Map<string, object>} id → pending edits */
   const edits = new Map();
-  /** @type {Set<string>} selected style IDs */
+  /** @type {Set<string>} */
   const selected = new Set();
-  /** @type {string[]} currently visible (filtered) style IDs in order */
+  /** @type {Map<string, string>} id → error message from last apply */
+  const rowErrors = new Map();
+  /** @type {string[]} */
   let visibleIds = [];
+  /** @type {Object.<string, string[]>} family → available styles */
+  let fontMap = {};
+
+  // ── Column widths (px) ────────────────────────────────────────────────────
+  // Indices match <col> order: check, state, name, family, style, size, lh, ls, case, deco
+  const colWidths = [32, 28, 150, 130, 90, 65, 75, 75, 85, 95];
+  let resizingState = null; // { idx, startX, startWidth }
+
+  function applyColWidths() {
+    const cols = document.querySelectorAll('#colgroup col');
+    cols.forEach((col, i) => { col.style.width = colWidths[i] + 'px'; });
+    const total = colWidths.reduce((a, b) => a + b, 0);
+    document.getElementById('stylesTable').style.width = total + 'px';
+  }
 
   // ── DOM refs ──────────────────────────────────────────────────────────────
-  const searchInput   = document.getElementById('searchInput');
-  const countLabel    = document.getElementById('countLabel');
-  const btnSelectAll  = document.getElementById('btnSelectAll');
-  const btnClearSel   = document.getElementById('btnClearSel');
-  const btnReload     = document.getElementById('btnReload');
-  const btnPreview    = document.getElementById('btnPreview');
-  const bulkBar       = document.getElementById('bulkBar');
-  const bulkCount     = document.getElementById('bulkCount');
-  const bulkFontFamily= document.getElementById('bulkFontFamily');
-  const bulkFontStyle = document.getElementById('bulkFontStyle');
-  const bulkFontSize  = document.getElementById('bulkFontSize');
-  const bulkCase      = document.getElementById('bulkCase');
-  const btnApplyBulk  = document.getElementById('btnApplyBulk');
-  const tableBody     = document.getElementById('tableBody');
-  const headerCheck   = document.getElementById('headerCheck');
-  const statusMsg     = document.getElementById('statusMsg');
-  const btnDiscardAll = document.getElementById('btnDiscardAll');
-  const btnApplyAll   = document.getElementById('btnApplyAll');
-  const previewPanel  = document.getElementById('previewPanel');
-  const previewBody   = document.getElementById('previewBody');
-  const btnClosePreview = document.getElementById('btnClosePreview');
-  const btnCancelApply  = document.getElementById('btnCancelApply');
-  const btnConfirmApply = document.getElementById('btnConfirmApply');
+  const searchInput    = document.getElementById('searchInput');
+  const countLabel     = document.getElementById('countLabel');
+  const btnSelectAll   = document.getElementById('btnSelectAll');
+  const btnClearSel    = document.getElementById('btnClearSel');
+  const btnReload      = document.getElementById('btnReload');
+  const btnPreview     = document.getElementById('btnPreview');
+  const bulkBar        = document.getElementById('bulkBar');
+  const bulkCount      = document.getElementById('bulkCount');
+  const bulkFontFamily = document.getElementById('bulkFontFamily');
+  const bulkFontSize   = document.getElementById('bulkFontSize');
+  const bulkCase       = document.getElementById('bulkCase');
+  const btnApplyBulk   = document.getElementById('btnApplyBulk');
+  const tableBody      = document.getElementById('tableBody');
+  const headerCheck    = document.getElementById('headerCheck');
+  const statusMsg      = document.getElementById('statusMsg');
+  const btnDiscardAll  = document.getElementById('btnDiscardAll');
+  const btnApplyAll    = document.getElementById('btnApplyAll');
+  const errorPanel     = document.getElementById('errorPanel');
+  const errorList      = document.getElementById('errorList');
+  const btnDismissErrors = document.getElementById('btnDismissErrors');
+  const previewPanel   = document.getElementById('previewPanel');
+  const previewBody    = document.getElementById('previewBody');
+  const btnClosePreview  = document.getElementById('btnClosePreview');
+  const btnCancelApply   = document.getElementById('btnCancelApply');
+  const btnConfirmApply  = document.getElementById('btnConfirmApply');
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function formatLineHeight(lh) {
@@ -478,10 +556,7 @@
     if (!o) return;
 
     const entry = edits.get(id) || {};
-
-    // Compare with original — if equal, remove from edits
-    const orig = o[field];
-    const same = JSON.stringify(orig) === JSON.stringify(value);
+    const same = JSON.stringify(o[field]) === JSON.stringify(value);
 
     if (same) {
       delete entry[field];
@@ -495,16 +570,15 @@
       edits.set(id, entry);
     }
 
+    // Editing a row clears its previous apply error
+    rowErrors.delete(id);
+
     updateFooterButtons();
     updateRowPendingState(id);
   }
 
-  function pendingEditsCount() {
-    return edits.size;
-  }
-
   function updateFooterButtons() {
-    const hasPending = pendingEditsCount() > 0;
+    const hasPending = edits.size > 0;
     btnPreview.disabled = !hasPending;
     btnApplyAll.disabled = !hasPending;
     btnDiscardAll.disabled = !hasPending;
@@ -514,31 +588,41 @@
     const row = document.querySelector(`tr[data-id="${id}"]`);
     if (!row) return;
     const isPending = edits.has(id);
+    const hasError  = rowErrors.has(id);
     row.classList.toggle('pending', isPending);
+
     const dot = row.querySelector('.status-dot');
     if (dot) {
-      dot.className = 'status-dot' + (isPending ? ' pending' : '');
-      dot.title = isPending ? 'Unsaved changes' : '';
+      if (hasError) {
+        dot.className = 'status-dot err';
+        dot.title = rowErrors.get(id);
+      } else if (isPending) {
+        dot.className = 'status-dot pending';
+        dot.title = 'Unsaved changes';
+      } else {
+        dot.className = 'status-dot';
+        dot.title = '';
+      }
     }
-    // Update changed state on inputs
+
     row.querySelectorAll('.cell-input[data-field]').forEach(input => {
-      const field = input.dataset.field;
       const e = edits.get(id);
-      input.classList.toggle('changed', !!(e && field in e));
+      input.classList.toggle('changed', !!(e && input.dataset.field in e));
     });
+  }
+
+  function escHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
   function renderTable() {
     const query = searchInput.value.trim().toLowerCase();
-    visibleIds = [];
-
     const allIds = [...originals.keys()];
     const filtered = query
-      ? allIds.filter(id => {
-          const s = originals.get(id);
-          return s.name.toLowerCase().includes(query);
-        })
+      ? allIds.filter(id => originals.get(id).name.toLowerCase().includes(query))
       : allIds;
 
     visibleIds = filtered;
@@ -555,10 +639,8 @@
       return;
     }
 
-    const rows = filtered.map(id => buildRow(id)).join('');
-    tableBody.innerHTML = rows;
+    tableBody.innerHTML = filtered.map(buildRow).join('');
 
-    // Restore checkbox states
     filtered.forEach(id => {
       const cb = tableBody.querySelector(`tr[data-id="${id}"] input[type="checkbox"]`);
       if (cb) cb.checked = selected.has(id);
@@ -569,88 +651,81 @@
   }
 
   function buildRow(id) {
-    const sel = selected.has(id) ? 'selected' : '';
-    const pending = edits.has(id) ? 'pending' : '';
-    const dotClass = edits.has(id) ? 'status-dot pending' : 'status-dot';
-    const dotTitle = edits.has(id) ? 'Unsaved changes' : '';
+    const hasPending = edits.has(id);
+    const hasError   = rowErrors.has(id);
+    const sel        = selected.has(id) ? 'selected' : '';
+    const pendingCls = hasPending ? 'pending' : '';
 
+    let dotClass = 'status-dot';
+    let dotTitle = '';
+    if (hasError) {
+      dotClass = 'status-dot err';
+      dotTitle = rowErrors.get(id) || 'Error';
+    } else if (hasPending) {
+      dotClass = 'status-dot pending';
+      dotTitle = 'Unsaved changes';
+    }
+
+    const e          = edits.get(id) || {};
     const name       = getEffective(id, 'name') || '';
     const family     = getEffective(id, 'fontName')?.family || '';
     const fontStyle  = getEffective(id, 'fontName')?.style || '';
     const fontSize   = getEffective(id, 'fontSize') || '';
     const lineHeight = formatLineHeight(getEffective(id, 'lineHeight'));
-    const letterSpacing = formatLetterSpacing(getEffective(id, 'letterSpacing'));
+    const ls         = formatLetterSpacing(getEffective(id, 'letterSpacing'));
     const textCase   = getEffective(id, 'textCase') || 'ORIGINAL';
     const textDeco   = getEffective(id, 'textDecoration') || 'NONE';
 
-    const nameChanged   = edits.has(id) && 'name' in edits.get(id) ? 'changed' : '';
-    const familyChanged = edits.has(id) && 'fontName' in edits.get(id) ? 'changed' : '';
-    const sizeChanged   = edits.has(id) && 'fontSize' in edits.get(id) ? 'changed' : '';
-    const caseChanged   = edits.has(id) && 'textCase' in edits.get(id) ? 'changed' : '';
-    const decoChanged   = edits.has(id) && 'textDecoration' in edits.get(id) ? 'changed' : '';
+    const nc = 'name'      in e ? 'changed' : '';
+    const fc = 'fontName'  in e ? 'changed' : '';
+    const sc = 'fontSize'  in e ? 'changed' : '';
+    const cc = 'textCase'  in e ? 'changed' : '';
+    const dc = 'textDecoration' in e ? 'changed' : '';
 
-    const caseOptions = ['ORIGINAL','UPPER','LOWER','TITLE','SMALL_CAPS','SMALL_CAPS_FORCED']
-      .map(v => `<option value="${v}"${textCase === v ? ' selected' : ''}>${textCaseLabel(v)}</option>`)
+    const caseOpts = ['ORIGINAL','UPPER','LOWER','TITLE','SMALL_CAPS','SMALL_CAPS_FORCED']
+      .map(v => `<option value="${v}"${textCase===v?' selected':''}>${textCaseLabel(v)}</option>`)
+      .join('');
+    const decoOpts = ['NONE','UNDERLINE','STRIKETHROUGH','UNDERLINE_AND_STRIKETHROUGH']
+      .map(v => `<option value="${v}"${textDeco===v?' selected':''}>${textDecoLabel(v)}</option>`)
       .join('');
 
-    const decoOptions = ['NONE','UNDERLINE','STRIKETHROUGH','UNDERLINE_AND_STRIKETHROUGH']
-      .map(v => `<option value="${v}"${textDeco === v ? ' selected' : ''}>${textDecoLabel(v)}</option>`)
-      .join('');
-
-    return `<tr data-id="${id}" class="${sel} ${pending}">
+    return `<tr data-id="${id}" class="${sel} ${pendingCls}">
       <td class="col-check"><input type="checkbox" class="row-check" /></td>
-      <td class="col-name"><input class="cell-input ${nameChanged}" data-field="name" data-id="${id}" value="${escHtml(name)}" /></td>
-      <td class="col-family"><input class="cell-input ${familyChanged}" data-field="fontFamily" data-id="${id}" value="${escHtml(family)}" /></td>
-      <td class="col-style"><input class="cell-input ${familyChanged}" data-field="fontStyleVal" data-id="${id}" value="${escHtml(fontStyle)}" /></td>
-      <td class="col-size"><input class="cell-input ${sizeChanged}" data-field="fontSize" data-id="${id}" type="number" min="1" max="999" value="${fontSize}" /></td>
+      <td class="col-state"><span class="${dotClass}" title="${escHtml(dotTitle)}"></span></td>
+      <td class="col-name"><input class="cell-input ${nc}" data-field="name" data-id="${id}" value="${escHtml(name)}" /></td>
+      <td class="col-family"><input class="cell-input ${fc}" data-field="fontFamily" data-id="${id}" value="${escHtml(family)}" /></td>
+      <td class="col-style"><input class="cell-input ${fc}" data-field="fontStyleVal" data-id="${id}" value="${escHtml(fontStyle)}" /></td>
+      <td class="col-size"><input class="cell-input ${sc}" data-field="fontSize" data-id="${id}" type="number" min="1" max="999" value="${escHtml(String(fontSize))}" /></td>
       <td class="col-lh">${escHtml(lineHeight)}</td>
-      <td class="col-ls">${escHtml(letterSpacing)}</td>
-      <td class="col-case"><select class="cell-input ${caseChanged}" data-field="textCase" data-id="${id}">${caseOptions}</select></td>
-      <td class="col-deco"><select class="cell-input ${decoChanged}" data-field="textDecoration" data-id="${id}">${decoOptions}</select></td>
-      <td class="col-status" style="text-align:center"><span class="${dotClass}" title="${dotTitle}"></span></td>
+      <td class="col-ls">${escHtml(ls)}</td>
+      <td class="col-case"><select class="cell-input ${cc}" data-field="textCase" data-id="${id}">${caseOpts}</select></td>
+      <td class="col-deco"><select class="cell-input ${dc}" data-field="textDecoration" data-id="${id}">${decoOpts}</select></td>
     </tr>`;
   }
 
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  // ── Cell event listeners ──────────────────────────────────────────────────
+  // ── Cell listeners ────────────────────────────────────────────────────────
   function attachCellListeners() {
     tableBody.querySelectorAll('.row-check').forEach(cb => {
       cb.addEventListener('change', onRowCheckChange);
     });
-
     tableBody.querySelectorAll('.cell-input').forEach(input => {
       input.addEventListener('change', onCellChange);
     });
-
     tableBody.querySelectorAll('tr[data-id]').forEach(row => {
       row.addEventListener('click', onRowClick);
     });
   }
 
   function onRowClick(e) {
-    // Only toggle selection when clicking the row background, not inputs
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-    const id = e.currentTarget.dataset.id;
-    toggleSelected(id);
+    toggleSelected(e.currentTarget.dataset.id);
   }
 
   function onRowCheckChange(e) {
     const row = e.target.closest('tr[data-id]');
     const id = row.dataset.id;
-    if (e.target.checked) {
-      selected.add(id);
-      row.classList.add('selected');
-    } else {
-      selected.delete(id);
-      row.classList.remove('selected');
-    }
+    if (e.target.checked) { selected.add(id); row.classList.add('selected'); }
+    else                   { selected.delete(id); row.classList.remove('selected'); }
     updateHeaderCheckbox();
     updateBulkBar();
   }
@@ -660,13 +735,9 @@
     if (!row) return;
     const cb = row.querySelector('.row-check');
     if (selected.has(id)) {
-      selected.delete(id);
-      row.classList.remove('selected');
-      if (cb) cb.checked = false;
+      selected.delete(id); row.classList.remove('selected'); if (cb) cb.checked = false;
     } else {
-      selected.add(id);
-      row.classList.add('selected');
-      if (cb) cb.checked = true;
+      selected.add(id);    row.classList.add('selected');    if (cb) cb.checked = true;
     }
     updateHeaderCheckbox();
     updateBulkBar();
@@ -674,7 +745,7 @@
 
   function onCellChange(e) {
     const input = e.target;
-    const id = input.dataset.id;
+    const id    = input.dataset.id;
     const field = input.dataset.field;
     if (!id || !field) return;
 
@@ -684,17 +755,10 @@
       const v = parseFloat(input.value);
       if (!isNaN(v) && v > 0) setEdit(id, 'fontSize', v);
     } else if (field === 'fontFamily' || field === 'fontStyleVal') {
-      // Font family and style are grouped under fontName
-      const currentFontName = getEffective(id, 'fontName') || {};
-      const family = field === 'fontFamily'
-        ? input.value.trim()
-        : currentFontName.family || '';
-      const style = field === 'fontStyleVal'
-        ? input.value.trim()
-        : currentFontName.style || '';
-      if (family && style) {
-        setEdit(id, 'fontName', { family, style });
-      }
+      const current = getEffective(id, 'fontName') || {};
+      const family  = field === 'fontFamily'   ? input.value.trim() : (current.family || '');
+      const style   = field === 'fontStyleVal' ? input.value.trim() : (current.style  || '');
+      if (family && style) setEdit(id, 'fontName', { family, style });
     } else if (field === 'textCase') {
       setEdit(id, 'textCase', input.value);
     } else if (field === 'textDecoration') {
@@ -704,45 +768,70 @@
 
   // ── Header checkbox ───────────────────────────────────────────────────────
   function updateHeaderCheckbox() {
-    const visibleSelected = visibleIds.filter(id => selected.has(id)).length;
-    if (visibleSelected === 0) {
-      headerCheck.checked = false;
-      headerCheck.indeterminate = false;
-    } else if (visibleSelected === visibleIds.length) {
-      headerCheck.checked = true;
-      headerCheck.indeterminate = false;
+    const selCount = visibleIds.filter(id => selected.has(id)).length;
+    if (selCount === 0) {
+      headerCheck.checked = false; headerCheck.indeterminate = false;
+    } else if (selCount === visibleIds.length) {
+      headerCheck.checked = true;  headerCheck.indeterminate = false;
     } else {
-      headerCheck.checked = false;
-      headerCheck.indeterminate = true;
+      headerCheck.checked = false; headerCheck.indeterminate = true;
     }
   }
 
   headerCheck.addEventListener('change', () => {
-    if (headerCheck.checked) {
-      visibleIds.forEach(id => selected.add(id));
-    } else {
-      visibleIds.forEach(id => selected.delete(id));
-    }
+    if (headerCheck.checked) visibleIds.forEach(id => selected.add(id));
+    else                     visibleIds.forEach(id => selected.delete(id));
     renderTable();
     updateBulkBar();
   });
 
   // ── Bulk bar ──────────────────────────────────────────────────────────────
   function updateBulkBar() {
-    const count = selected.size;
-    bulkCount.textContent = count;
-    if (count > 0) {
-      bulkBar.classList.add('visible');
+    bulkCount.textContent = selected.size;
+    bulkBar.classList.toggle('visible', selected.size > 0);
+    updateBulkFontStyleControl();
+  }
+
+  function updateBulkFontStyleControl() {
+    const wrap = document.getElementById('bulkFontStyleWrap');
+
+    if (selected.size === 0) {
+      wrap.innerHTML = `<input type="text" id="bulkFontStyle" placeholder="–" style="width:100px" disabled />`;
+      return;
+    }
+
+    // Resolve the effective family to use for the dropdown
+    const typedFamily = bulkFontFamily.value.trim();
+    const selFamilies = new Set([...selected].map(id => getEffective(id, 'fontName')?.family || ''));
+    const commonFamily = typedFamily || (selFamilies.size === 1 ? [...selFamilies][0] : null);
+
+    if (commonFamily && fontMap[commonFamily] && fontMap[commonFamily].length > 0) {
+      const opts = fontMap[commonFamily]
+        .map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`)
+        .join('');
+      wrap.innerHTML = `<select id="bulkFontStyle" style="width:100px"><option value="">–</option>${opts}</select>`;
+    } else if (commonFamily) {
+      // Family is specified but not in the font map (e.g. typed manually)
+      wrap.innerHTML = `<input type="text" id="bulkFontStyle" placeholder="e.g. Regular" style="width:100px" />`;
     } else {
-      bulkBar.classList.remove('visible');
+      // Mixed families and no override typed
+      wrap.innerHTML = `<input type="text" id="bulkFontStyle"
+        placeholder="Mixed families"
+        style="width:100px"
+        disabled
+        title="All selected styles must share the same font family to bulk-edit style" />`;
     }
   }
 
+  // Update style dropdown when family input changes
+  bulkFontFamily.addEventListener('input', updateBulkFontStyleControl);
+
   btnApplyBulk.addEventListener('click', () => {
-    const family = bulkFontFamily.value.trim();
-    const style  = bulkFontStyle.value.trim();
-    const size   = parseFloat(bulkFontSize.value);
-    const tc     = bulkCase.value;
+    const family   = bulkFontFamily.value.trim();
+    const styleEl  = document.getElementById('bulkFontStyle');
+    const style    = (styleEl && !styleEl.disabled) ? styleEl.value.trim() : '';
+    const size     = parseFloat(bulkFontSize.value);
+    const tc       = bulkCase.value;
 
     selected.forEach(id => {
       if (family || style) {
@@ -756,13 +845,41 @@
       if (tc) setEdit(id, 'textCase', tc);
     });
 
-    // Clear bulk inputs
     bulkFontFamily.value = '';
-    bulkFontStyle.value  = '';
     bulkFontSize.value   = '';
     bulkCase.value       = '';
-
+    updateBulkFontStyleControl();
     renderTable();
+  });
+
+  // ── Column resize ─────────────────────────────────────────────────────────
+  document.addEventListener('mousedown', e => {
+    const resizer = e.target.closest('.col-resizer');
+    if (!resizer) return;
+    e.preventDefault();
+    const idx = parseInt(resizer.dataset.colIdx, 10);
+    resizingState = { idx, startX: e.pageX, startWidth: colWidths[idx] };
+    resizer.classList.add('dragging');
+    document.body.style.cursor      = 'col-resize';
+    document.body.style.userSelect  = 'none';
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!resizingState) return;
+    const delta    = e.pageX - resizingState.startX;
+    const newWidth = Math.max(40, resizingState.startWidth + delta);
+    colWidths[resizingState.idx] = newWidth;
+    applyColWidths();
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (!resizingState) return;
+    const idx = resizingState.idx;
+    resizingState = null;
+    document.body.style.cursor     = '';
+    document.body.style.userSelect = '';
+    const resizer = document.querySelector(`.col-resizer[data-col-idx="${idx}"]`);
+    if (resizer) resizer.classList.remove('dragging');
   });
 
   // ── Preview ───────────────────────────────────────────────────────────────
@@ -773,26 +890,23 @@
     edits.forEach((changes, id) => {
       const orig = originals.get(id);
       if (!orig) return;
-
-      const changeLines = [];
-      Object.keys(changes).forEach(field => {
-        const oldVal = formatValue(field, orig[field], orig);
-        const newVal = formatValue(field, changes[field], orig);
-        changeLines.push({ field, oldVal, newVal });
-      });
-
-      items.push({ name: orig.name, changeLines });
+      const lines = Object.keys(changes).map(field => ({
+        field,
+        oldVal: formatValue(field, orig[field]),
+        newVal: formatValue(field, changes[field]),
+      }));
+      items.push({ name: orig.name, lines });
     });
 
     previewBody.innerHTML = items.map(item => `
       <div class="preview-item">
         <div class="preview-item-name">${escHtml(item.name)}</div>
-        ${item.changeLines.map(cl => `
+        ${item.lines.map(l => `
           <div class="preview-change">
-            <span class="preview-change-key">${escHtml(fieldLabel(cl.field))}</span>
-            <span class="preview-change-old">${escHtml(cl.oldVal)}</span>
-            <span class="preview-change-arrow">→</span>
-            <span class="preview-change-new">${escHtml(cl.newVal)}</span>
+            <span class="preview-change-key">${escHtml(fieldLabel(l.field))}</span>
+            <span class="preview-change-old">${escHtml(l.oldVal)}</span>
+            <span style="color:var(--text-muted)"> → </span>
+            <span class="preview-change-new">${escHtml(l.newVal)}</span>
           </div>
         `).join('')}
       </div>
@@ -811,20 +925,20 @@
     return map[field] || field;
   }
 
-  function formatValue(field, val, orig) {
+  function formatValue(field, val) {
     if (val === undefined || val === null) return '–';
-    if (field === 'fontName') return `${val.family} ${val.style}`;
-    if (field === 'lineHeight') return formatLineHeight(val);
-    if (field === 'letterSpacing') return formatLetterSpacing(val);
-    if (field === 'fontSize') return `${val}px`;
-    if (field === 'textCase') return textCaseLabel(val);
-    if (field === 'textDecoration') return textDecoLabel(val);
+    if (field === 'fontName')        return `${val.family} ${val.style}`;
+    if (field === 'lineHeight')      return formatLineHeight(val);
+    if (field === 'letterSpacing')   return formatLetterSpacing(val);
+    if (field === 'fontSize')        return `${val}px`;
+    if (field === 'textCase')        return textCaseLabel(val);
+    if (field === 'textDecoration')  return textDecoLabel(val);
     return String(val);
   }
 
   btnPreview.addEventListener('click', buildPreview);
   btnClosePreview.addEventListener('click', () => previewPanel.classList.remove('visible'));
-  btnCancelApply.addEventListener('click', () => previewPanel.classList.remove('visible'));
+  btnCancelApply.addEventListener('click',  () => previewPanel.classList.remove('visible'));
   btnConfirmApply.addEventListener('click', () => {
     previewPanel.classList.remove('visible');
     sendApply();
@@ -835,25 +949,40 @@
 
   function sendApply() {
     if (edits.size === 0) return;
-
     const editsList = [];
-    edits.forEach((changes, id) => {
-      editsList.push({ id, changes });
-    });
-
+    edits.forEach((changes, id) => editsList.push({ id, changes }));
     setStatus('Applying changes…', '');
-    btnApplyAll.disabled = true;
+    btnApplyAll.disabled  = true;
     btnDiscardAll.disabled = true;
-
     parent.postMessage({ pluginMessage: { type: 'apply-changes', edits: editsList } }, '*');
   }
 
   btnDiscardAll.addEventListener('click', () => {
     edits.clear();
+    rowErrors.clear();
+    dismissErrorPanel();
     updateFooterButtons();
     renderTable();
     setStatus('All changes discarded.', '');
   });
+
+  // ── Error panel ───────────────────────────────────────────────────────────
+  function showErrorPanel(failures) {
+    errorList.innerHTML = failures.map(f => `
+      <div class="error-list-item">
+        <span class="err-name">${escHtml(f.name)}</span>:
+        <span class="err-msg">${escHtml(f.error || 'Unknown error')}</span>
+      </div>
+    `).join('');
+    errorPanel.style.display = 'block';
+  }
+
+  function dismissErrorPanel() {
+    errorPanel.style.display = 'none';
+    errorList.innerHTML = '';
+  }
+
+  btnDismissErrors.addEventListener('click', dismissErrorPanel);
 
   // ── Toolbar actions ───────────────────────────────────────────────────────
   btnSelectAll.addEventListener('click', () => {
@@ -869,66 +998,59 @@
   });
 
   btnReload.addEventListener('click', () => {
-    originals.clear();
-    edits.clear();
-    selected.clear();
+    originals.clear(); edits.clear(); selected.clear(); rowErrors.clear();
     visibleIds = [];
     tableBody.innerHTML = '<tr class="empty-row"><td colspan="10">Loading styles…</td></tr>';
+    dismissErrorPanel();
     setStatus('', '');
     updateFooterButtons();
     updateBulkBar();
     parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
   });
 
-  searchInput.addEventListener('input', () => {
-    renderTable();
-  });
+  searchInput.addEventListener('input', renderTable);
 
   // ── Status ────────────────────────────────────────────────────────────────
   function setStatus(msg, type) {
     statusMsg.textContent = msg;
-    statusMsg.className = type || '';
+    statusMsg.className   = type || '';
   }
 
-  // ── Message handler (from plugin controller) ──────────────────────────────
+  // ── Message handler ───────────────────────────────────────────────────────
   window.onmessage = (event) => {
     const msg = event.data.pluginMessage;
     if (!msg) return;
 
     if (msg.type === 'styles-loaded') {
-      originals.clear();
-      edits.clear();
-
+      originals.clear(); edits.clear(); rowErrors.clear();
       msg.styles.forEach(s => originals.set(s.id, s));
+      fontMap = msg.fonts || {};
       renderTable();
       setStatus('', '');
+      dismissErrorPanel();
       updateBulkBar();
       updateFooterButtons();
 
     } else if (msg.type === 'apply-results') {
-      const results = msg.results;
-      let okCount = 0;
-      let failCount = 0;
+      rowErrors.clear();
+      let okCount = 0, failCount = 0;
 
-      results.forEach(r => {
+      msg.results.forEach(r => {
         if (r.ok) {
           okCount++;
-          // Refresh the original to reflect what was saved
           const e = edits.get(r.id);
           if (e) {
             const orig = originals.get(r.id);
-            if (orig) {
-              Object.assign(orig, e);
-            }
+            if (orig) Object.assign(orig, e);
             edits.delete(r.id);
           }
-          // Update status dot to success
           const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
           if (dot) { dot.className = 'status-dot ok'; dot.title = 'Applied'; }
           const row = document.querySelector(`tr[data-id="${r.id}"]`);
           if (row) row.classList.remove('pending');
         } else {
           failCount++;
+          rowErrors.set(r.id, r.error || 'Unknown error');
           const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
           if (dot) { dot.className = 'status-dot err'; dot.title = r.error || 'Error'; }
         }
@@ -938,8 +1060,10 @@
 
       if (failCount === 0) {
         setStatus(`✓ Applied ${okCount} change${okCount !== 1 ? 's' : ''} successfully.`, 'ok');
+        dismissErrorPanel();
       } else {
-        setStatus(`⚠ ${okCount} succeeded, ${failCount} failed. Check red dots.`, 'err');
+        setStatus(`⚠ ${okCount} succeeded, ${failCount} failed.`, 'err');
+        showErrorPanel(msg.results.filter(r => !r.ok));
       }
 
     } else if (msg.type === 'error') {
@@ -948,6 +1072,7 @@
   };
 
   // ── Boot ──────────────────────────────────────────────────────────────────
+  applyColWidths();
   parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
 })();
 </script>
