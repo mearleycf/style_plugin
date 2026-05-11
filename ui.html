@@ -1,1125 +1,949 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Bulk Typography Style Editor</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;background:#fff;color:#1a1a1a;overflow:hidden;height:100vh;display:flex;flex-direction:column}
 
-  :root {
-    --bg: #ffffff;
-    --surface: #f5f5f5;
-    --border: #e0e0e0;
-    --text: #1a1a1a;
-    --text-muted: #666;
-    --accent: #18a0fb;
-    --accent-hover: #0d8de8;
-    --danger: #f24e1e;
-    --success: #1bc47d;
-    --row-hover: #f0f7ff;
-    --row-selected: #e6f3fe;
-    --font: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-    --radius: 4px;
-  }
+/* ── toolbar ── */
+#toolbar{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;overflow:hidden}
+#toolbar button{padding:3px 8px;font-size:11px;border:1px solid #ccc;border-radius:3px;background:#fff;cursor:pointer}
+#toolbar button:hover{background:#e8e8e8}
+#toolbar button:disabled{opacity:.45;cursor:default}
+#applyBtn{background:#0d99ff;color:#fff;border-color:#0d99ff;font-weight:600}
+#applyBtn:hover:not(:disabled){background:#0b88e8}
+#selInfo{font-size:11px;color:#555}
+#filterWrap{display:flex;align-items:center;gap:4px;flex:1;min-width:160px;max-width:340px}
+#filterName{flex:1;font-size:11px;border:1px solid #ccc;border-radius:3px;padding:3px 6px;outline:none}
+#filterName:focus{border-color:#0d99ff}
+#filterName.active{border-color:#0d99ff;background:#e3f2fd}
+#clearFilterBtn{font-size:10px;padding:2px 6px;display:none}
 
-  body {
-    font-family: var(--font);
-    font-size: 12px;
-    color: var(--text);
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
+/* ── bulk bar ── */
+#bulkBar{display:none;align-items:center;gap:6px;padding:4px 8px;background:#fff8e1;border-bottom:1px solid #ffe082;flex-shrink:0;flex-wrap:wrap}
+#bulkBar label{font-size:11px;color:#555;white-space:nowrap}
+#bulkBar input[type=number],#bulkBar select{font-size:11px;border:1px solid #ccc;border-radius:3px;padding:2px 4px;width:76px}
+#bulkBar .bb-group{display:flex;align-items:center;gap:3px}
+#bulkBar .bb-sep{width:1px;height:18px;background:#ddd;margin:0 2px}
+#applyBulkBtn{padding:3px 8px;font-size:11px;border:1px solid #0d99ff;border-radius:3px;background:#0d99ff;color:#fff;cursor:pointer;font-weight:600}
 
-  /* ── Toolbar ── */
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    background: var(--bg);
-  }
+/* bulk var chip */
+.bb-var-chip{display:flex;align-items:center;gap:2px;background:#e3f2fd;border:1px solid #0d99ff;border-radius:10px;padding:1px 6px;font-size:10px;color:#0d99ff;max-width:120px}
+.bb-var-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.bb-var-chip button{border:none;background:none;color:#0d99ff;cursor:pointer;padding:0;font-size:10px;line-height:1;flex-shrink:0}
+.bb-var-btn{flex-shrink:0;width:18px;height:18px;border:1px solid #bbb;border-radius:3px;background:#f5f5f5;cursor:pointer;font-size:10px;color:#555;padding:0;line-height:16px;text-align:center}
+.bb-var-btn:hover{background:#e0e8ff;border-color:#0d99ff;color:#0d99ff}
 
-  .search-wrap {
-    position: relative;
-    flex: 1;
-    max-width: 280px;
-  }
-  .search-wrap svg {
-    position: absolute;
-    left: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    color: var(--text-muted);
-  }
-  #searchInput {
-    width: 100%;
-    padding: 5px 8px 5px 28px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 12px;
-    font-family: var(--font);
-    outline: none;
-    background: var(--surface);
-  }
-  #searchInput:focus { border-color: var(--accent); background: #fff; }
+/* ── error panel ── */
+#errorPanel{display:none;padding:6px 10px;background:#fff3f3;border-bottom:1px solid #ffcdd2;font-size:11px;color:#c62828;flex-shrink:0;max-height:80px;overflow-y:auto}
 
-  .count-label { color: var(--text-muted); white-space: nowrap; font-size: 11px; }
+/* ── table ── */
+#tableWrap{flex:1;overflow:auto;position:relative}
+table{border-collapse:collapse;table-layout:fixed;min-width:100%}
+thead th{
+  position:sticky;top:0;z-index:10;
+  background:#f0f0f0;border-bottom:2px solid #ccc;border-right:1px solid #ddd;
+  padding:4px 4px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;
+  user-select:none;
+}
+thead th .th-inner{display:flex;align-items:center;overflow:hidden}
+thead th .th-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+thead th .th-resize{width:4px;height:100%;position:absolute;right:0;top:0;cursor:col-resize;background:transparent}
 
-  .spacer { flex: 1; }
+tbody tr{border-bottom:1px solid #eee}
+tbody tr:hover{background:#f7f9ff}
+tbody tr.dirty{background:#fff8e1}
+tbody tr.dirty:hover{background:#fff3cc}
 
-  button {
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 500;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    padding: 5px 12px;
-    transition: background 0.1s;
-    white-space: nowrap;
-  }
-  button:disabled { opacity: 0.4; cursor: not-allowed; }
+td{border-right:1px solid #eee;padding:2px 3px;vertical-align:middle;overflow:hidden}
+td input[type=text],td input[type=number],td select{
+  width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;padding:1px 3px;background:transparent;outline:none;
+}
+td input[type=text]:focus,td input[type=number]:focus,td select:focus{border-color:#0d99ff;background:#fff}
+td input[type=checkbox]{cursor:pointer}
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-  }
-  .btn-ghost:hover:not(:disabled) { background: var(--surface); }
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot-ok{background:#4caf50}
+.dot-err{background:#f44336}
+.dot-pending{background:#ff9800}
+.state-cell{text-align:center;padding:2px}
 
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-  }
-  .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+/* var-bind cell */
+.vb-wrap{display:flex;align-items:center;gap:2px;width:100%}
+.vb-wrap input{flex:1;min-width:0}
+.vb-btn{
+  flex-shrink:0;width:16px;height:16px;border:1px solid #bbb;border-radius:2px;
+  background:#f5f5f5;cursor:pointer;font-size:9px;line-height:14px;text-align:center;color:#555;padding:0;
+}
+.vb-btn:hover{background:#e0e8ff;border-color:#0d99ff;color:#0d99ff}
+.vb-bound .vb-btn{background:#e3f2fd;border-color:#0d99ff;color:#0d99ff}
+.vb-bound input{color:#0d99ff;font-style:italic}
 
-  /* ── Bulk edit bar ── */
-  #bulkBar {
-    display: none;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    background: #fffbf0;
-    border-bottom: 1px solid #f0e0b0;
-    flex-shrink: 0;
-    flex-wrap: wrap;
-  }
-  #bulkBar.visible { display: flex; }
-  #bulkBar label { color: var(--text-muted); font-size: 11px; }
-  #bulkBar select, #bulkBar input[type="number"], #bulkBar input[type="text"] {
-    font-family: var(--font);
-    font-size: 12px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 4px 6px;
-    background: #fff;
-    outline: none;
-  }
-  #bulkBar select:focus, #bulkBar input:focus { border-color: var(--accent); }
-  #bulkBar input:disabled, #bulkBar select:disabled {
-    background: var(--surface);
-    color: var(--text-muted);
-    cursor: not-allowed;
-  }
+/* unit+value+var cells */
+.uv-wrap{display:flex;align-items:center;gap:2px;width:100%}
+.uv-wrap select.unit-sel{width:52px;flex-shrink:0;font-size:10px}
+.uv-wrap input{flex:1;min-width:0}
 
-  /* ── Table area ── */
-  .table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-  }
-
-  table {
-    border-collapse: collapse;
-    table-layout: fixed;
-    /* width set by JS via applyColWidths() */
-  }
-
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 6px 8px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    overflow: hidden;
-    user-select: none;
-  }
-  thead th.col-check { text-align: center; padding: 6px 4px; }
-  thead th.col-state { padding: 0; }
-
-  /* Column resize handle */
-  .col-resizer {
-    position: absolute;
-    right: 0;
-    top: 0;
-    height: 100%;
-    width: 5px;
-    cursor: col-resize;
-    z-index: 2;
-  }
-  .col-resizer:hover { background: var(--accent); opacity: 0.5; }
-  .col-resizer.dragging { background: var(--accent); opacity: 0.7; }
-
-  tbody tr {
-    border-bottom: 1px solid var(--border);
-    transition: background 0.08s;
-  }
-  tbody tr:hover { background: var(--row-hover); }
-  tbody tr.selected { background: var(--row-selected); }
-  tbody tr.pending td.col-name .cell-name-wrap::after {
-    content: " •";
-    color: var(--accent);
-    font-weight: 700;
-  }
-
-  td {
-    padding: 4px 8px;
-    vertical-align: middle;
-    font-size: 12px;
-    overflow: hidden;
-  }
-  td.col-check { text-align: center; padding: 4px; }
-  td.col-state { text-align: center; padding: 4px 0; }
-
-  td input[type="checkbox"] { cursor: pointer; accent-color: var(--accent); }
-
-  td .cell-input {
-    width: 100%;
-    font-family: var(--font);
-    font-size: 12px;
-    border: 1px solid transparent;
-    border-radius: var(--radius);
-    padding: 2px 4px;
-    background: transparent;
-    outline: none;
-    color: var(--text);
-  }
-  td .cell-input:hover { border-color: var(--border); background: #fff; }
-  td .cell-input:focus { border-color: var(--accent); background: #fff; }
-  td .cell-input.changed { border-color: var(--accent); background: #f0f7ff; }
-  td select.cell-input { cursor: pointer; }
-
-  /* Status dot in col-state */
-  .status-dot {
-    display: inline-block;
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: transparent;
-    cursor: default;
-  }
-  .status-dot.ok      { background: var(--success); }
-  .status-dot.err     { background: var(--danger); cursor: help; }
-  .status-dot.pending { background: var(--accent); }
-
-  /* ── Error detail panel ── */
-  #errorPanel {
-    display: none;
-    flex-shrink: 0;
-    background: #fff5f5;
-    border-top: 2px solid var(--danger);
-    padding: 8px 12px;
-    max-height: 130px;
-    overflow-y: auto;
-  }
-  .error-panel-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 6px;
-  }
-  .error-panel-title {
-    font-weight: 600;
-    font-size: 11px;
-    color: var(--danger);
-    flex: 1;
-  }
-  .error-list-item {
-    font-size: 11px;
-    padding: 2px 0;
-    line-height: 1.5;
-  }
-  .error-list-item .err-name { font-weight: 600; color: var(--text); }
-  .error-list-item .err-msg  { color: var(--text-muted); }
-
-  /* ── Footer ── */
-  .footer {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0;
-    background: var(--bg);
-  }
-  #statusMsg {
-    font-size: 11px;
-    color: var(--text-muted);
-    flex: 1;
-  }
-  #statusMsg.ok  { color: var(--success); }
-  #statusMsg.err { color: var(--danger); }
-
-  /* ── Preview panel ── */
-  #previewPanel {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.4);
-    z-index: 100;
-    align-items: center;
-    justify-content: center;
-  }
-  #previewPanel.visible { display: flex; }
-  .preview-box {
-    background: #fff;
-    border-radius: 6px;
-    width: 560px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-    overflow: hidden;
-  }
-  .preview-header {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    border-bottom: 1px solid var(--border);
-    font-weight: 600;
-    font-size: 13px;
-  }
-  .preview-header .spacer { flex: 1; }
-  .preview-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 12px 16px;
-  }
-  .preview-item {
-    margin-bottom: 12px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
-  .preview-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-  .preview-item-name { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
-  .preview-change {
-    display: flex;
-    gap: 8px;
-    font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 2px;
-  }
-  .preview-change-key { font-weight: 500; color: var(--text); width: 120px; flex-shrink: 0; }
-  .preview-change-old { color: var(--danger); text-decoration: line-through; }
-  .preview-change-new { color: var(--success); font-weight: 500; }
-  .preview-footer {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    padding: 12px 16px;
-    border-top: 1px solid var(--border);
-  }
-
-  /* ── Empty / loading ── */
-  .empty-row td {
-    text-align: center;
-    color: var(--text-muted);
-    padding: 32px;
-    font-size: 12px;
-  }
+/* floating var picker */
+#varPicker{
+  display:none;position:fixed;z-index:1000;background:#fff;border:1px solid #bbb;
+  border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.18);width:260px;max-height:300px;
+  flex-direction:column;
+}
+#varPicker.open{display:flex}
+#varPickerLabel{padding:4px 10px 0;font-size:10px;color:#888;font-weight:600;text-transform:uppercase}
+#varPickerSearch{padding:6px 8px;border:none;border-bottom:1px solid #ddd;font-size:11px;outline:none}
+#varPickerList{flex:1;overflow-y:auto}
+.vp-item{padding:5px 10px;cursor:pointer;font-size:11px;display:flex;flex-direction:column;gap:1px}
+.vp-item:hover{background:#f0f4ff}
+.vp-item.selected{background:#e3f2fd}
+.vp-name{font-weight:500}
+.vp-coll{font-size:10px;color:#888}
+.vp-none{padding:6px 10px;color:#999;font-size:11px;font-style:italic}
+#varPickerClear{padding:5px 10px;border-top:1px solid #eee;font-size:11px;color:#c62828;cursor:pointer}
+#varPickerClear:hover{background:#fff3f3}
 </style>
 </head>
 <body>
 
-<!-- Toolbar -->
-<div class="toolbar">
-  <div class="search-wrap">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="5" cy="5" r="3.5" stroke="currentColor" stroke-width="1.2"/>
-      <line x1="7.7" y1="7.7" x2="11" y2="11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
-    </svg>
-    <input type="text" id="searchInput" placeholder="Search styles…" autocomplete="off" />
+<div id="toolbar">
+  <button id="reloadBtn">&#8635; Reload</button>
+  <button id="applyBtn" disabled>Apply changes</button>
+  <button id="clearBtn" disabled>Clear edits</button>
+  <div id="filterWrap">
+    <input id="filterName" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
+    <button id="clearFilterBtn" title="Clear filter">&#x2715;</button>
   </div>
-  <span class="count-label" id="countLabel"></span>
-  <div class="spacer"></div>
-  <button class="btn-ghost" id="btnSelectAll">Select all</button>
-  <button class="btn-ghost" id="btnClearSel">Clear</button>
-  <button class="btn-ghost" id="btnReload">Reload</button>
-  <button class="btn-primary" id="btnPreview" disabled>Preview changes</button>
+  <span id="selInfo">Loading…</span>
 </div>
 
-<!-- Bulk edit bar -->
+<datalist id="nameGroupList"></datalist>
+
 <div id="bulkBar">
-  <label>Bulk edit <strong id="bulkCount">0</strong> selected —</label>
+  <strong style="font-size:11px;margin-right:4px">Bulk edit selected:</strong>
 
-  <label for="bulkFontFamily">Family</label>
-  <input type="text" id="bulkFontFamily" placeholder="e.g. Inter" style="width:100px" />
+  <div class="bb-group"><label>Family</label><input id="bb-family" type="text" placeholder="Family…" style="width:100px"/></div>
+  <div class="bb-group"><label>Style</label><select id="bb-style"><option value="">—</option></select></div>
+  <div class="bb-sep"></div>
 
-  <label>Style</label>
-  <span id="bulkFontStyleWrap">
-    <input type="text" id="bulkFontStyle" placeholder="–" style="width:100px" disabled />
-  </span>
+  <div class="bb-group">
+    <label>Size</label>
+    <input id="bb-size" type="number" min="1" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn" data-bulk-field="fontSize" title="Bind variable to font size">⚡</button>
+    <div id="bb-var-fontSize" class="bb-var-chip" style="display:none"><span></span><button data-clear-bulk="fontSize">✕</button></div>
+  </div>
+  <div class="bb-sep"></div>
 
-  <label for="bulkFontSize">Size</label>
-  <input type="number" id="bulkFontSize" placeholder="–" min="1" max="999" style="width:52px" />
+  <div class="bb-group">
+    <label>LH</label>
+    <select id="bb-lhUnit"><option value="">—</option><option>AUTO</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lhVal" type="number" min="0" step="0.5" placeholder="val"/>
+    <button class="bb-var-btn" data-bulk-field="lineHeight" title="Bind variable to line height">⚡</button>
+    <div id="bb-var-lineHeight" class="bb-var-chip" style="display:none"><span></span><button data-clear-bulk="lineHeight">✕</button></div>
+  </div>
+  <div class="bb-sep"></div>
 
-  <label for="bulkCase">Case</label>
-  <select id="bulkCase">
-    <option value="">–</option>
-    <option value="ORIGINAL">Original</option>
-    <option value="UPPER">UPPER</option>
-    <option value="LOWER">lower</option>
-    <option value="TITLE">Title</option>
-    <option value="SMALL_CAPS">Small Caps</option>
-    <option value="SMALL_CAPS_FORCED">Small Caps Forced</option>
-  </select>
+  <div class="bb-group">
+    <label>LS</label>
+    <select id="bb-lsUnit"><option value="">—</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lsVal" type="number" step="0.1" placeholder="val"/>
+  </div>
+  <div class="bb-sep"></div>
 
-  <button class="btn-ghost" id="btnApplyBulk" style="margin-left:4px">Apply to selected</button>
+  <div class="bb-group"><label>Case</label>
+    <select id="bb-case">
+      <option value="">—</option><option>ORIGINAL</option><option>UPPER</option><option>LOWER</option>
+      <option>TITLE</option><option>SMALL_CAPS</option><option>SMALL_CAPS_FORCED</option>
+    </select>
+  </div>
+  <div class="bb-group"><label>Decor</label>
+    <select id="bb-deco"><option value="">—</option><option>NONE</option><option>UNDERLINE</option><option>STRIKETHROUGH</option></select>
+  </div>
+  <div class="bb-group"><label>Lead Trim</label>
+    <select id="bb-lt"><option value="">—</option><option>NONE</option><option>CAP_HEIGHT</option></select>
+  </div>
+  <div class="bb-sep"></div>
+
+  <div class="bb-group">
+    <label>Para Sp</label>
+    <input id="bb-paraSp" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn" data-bulk-field="paragraphSpacing" title="Bind variable to paragraph spacing">⚡</button>
+    <div id="bb-var-paragraphSpacing" class="bb-var-chip" style="display:none"><span></span><button data-clear-bulk="paragraphSpacing">✕</button></div>
+  </div>
+
+  <div class="bb-group">
+    <label>Indent</label>
+    <input id="bb-indent" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn" data-bulk-field="paragraphIndent" title="Bind variable to paragraph indent">⚡</button>
+    <div id="bb-var-paragraphIndent" class="bb-var-chip" style="display:none"><span></span><button data-clear-bulk="paragraphIndent">✕</button></div>
+  </div>
+
+  <div class="bb-group">
+    <label>List Sp</label>
+    <input id="bb-listSp" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn" data-bulk-field="listSpacing" title="Bind variable to list spacing">⚡</button>
+    <div id="bb-var-listSpacing" class="bb-var-chip" style="display:none"><span></span><button data-clear-bulk="listSpacing">✕</button></div>
+  </div>
+
+  <button id="applyBulkBtn">Apply to selected</button>
 </div>
 
-<!-- Table -->
-<div class="table-wrap">
-  <table id="stylesTable">
-    <colgroup id="colgroup">
-      <col /><!-- 0: check    32px -->
-      <col /><!-- 1: state    28px -->
-      <col /><!-- 2: name    150px -->
-      <col /><!-- 3: family  130px -->
-      <col /><!-- 4: style    90px -->
-      <col /><!-- 5: size     65px -->
-      <col /><!-- 6: lh       75px -->
-      <col /><!-- 7: ls       75px -->
-      <col /><!-- 8: case     85px -->
-      <col /><!-- 9: deco     95px -->
-    </colgroup>
-    <thead>
-      <tr>
-        <th class="col-check"><input type="checkbox" id="headerCheck" title="Select/deselect all visible" /></th>
-        <th class="col-state"></th>
-        <th class="col-name">Name<span class="col-resizer" data-col-idx="2"></span></th>
-        <th class="col-family">Font Family<span class="col-resizer" data-col-idx="3"></span></th>
-        <th class="col-style">Font Style<span class="col-resizer" data-col-idx="4"></span></th>
-        <th class="col-size">Size<span class="col-resizer" data-col-idx="5"></span></th>
-        <th class="col-lh">Line Height<span class="col-resizer" data-col-idx="6"></span></th>
-        <th class="col-ls">Letter Spacing<span class="col-resizer" data-col-idx="7"></span></th>
-        <th class="col-case">Case<span class="col-resizer" data-col-idx="8"></span></th>
-        <th class="col-deco">Decoration<span class="col-resizer" data-col-idx="9"></span></th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-      <tr class="empty-row"><td colspan="10">Loading styles…</td></tr>
-    </tbody>
+<div id="errorPanel"></div>
+
+<div id="tableWrap">
+  <table id="styleTable">
+    <colgroup id="colgroup"></colgroup>
+    <thead><tr id="headerRow"></tr></thead>
+    <tbody id="tableBody"></tbody>
   </table>
 </div>
 
-<!-- Error detail panel -->
-<div id="errorPanel">
-  <div class="error-panel-header">
-    <span class="error-panel-title">Apply errors — hover the red dot on any row for a quick tooltip, or read below:</span>
-    <button class="btn-ghost" id="btnDismissErrors" style="padding:2px 8px;font-size:11px">Dismiss</button>
-  </div>
-  <div id="errorList"></div>
-</div>
-
-<!-- Footer -->
-<div class="footer">
-  <span id="statusMsg"></span>
-  <div class="spacer"></div>
-  <button class="btn-ghost" id="btnDiscardAll" disabled>Discard all changes</button>
-  <button class="btn-primary" id="btnApplyAll" disabled>Apply changes</button>
-</div>
-
-<!-- Preview panel (modal) -->
-<div id="previewPanel">
-  <div class="preview-box">
-    <div class="preview-header">
-      Preview pending changes
-      <div class="spacer"></div>
-      <button class="btn-ghost" id="btnClosePreview">✕</button>
-    </div>
-    <div class="preview-body" id="previewBody"></div>
-    <div class="preview-footer">
-      <button class="btn-ghost" id="btnCancelApply">Cancel</button>
-      <button class="btn-primary" id="btnConfirmApply">Apply all changes</button>
-    </div>
-  </div>
+<div id="varPicker">
+  <div id="varPickerLabel"></div>
+  <input id="varPickerSearch" type="text" placeholder="Search variables…"/>
+  <div id="varPickerList"></div>
+  <div id="varPickerClear">&#x2715; Unbind variable</div>
 </div>
 
 <script>
-(function () {
-  'use strict';
+// ─── column definitions ────────────────────────────────────────────
+const COLS = [
+  { key:'check',  label:'',           w:32,  resizable:false },
+  { key:'state',  label:'',           w:28,  resizable:false },
+  { key:'name',   label:'Name',       w:300, resizable:true  },
+  { key:'family', label:'Family',     w:140, resizable:true  },
+  { key:'style',  label:'Style',      w:100, resizable:true  },
+  { key:'size',   label:'Size',       w:90,  resizable:true  },
+  { key:'lh',     label:'Line Ht',    w:110, resizable:true  },
+  { key:'ls',     label:'Letter Sp',  w:100, resizable:true  },
+  { key:'paraSp', label:'Para Sp',    w:90,  resizable:true  },
+  { key:'indent', label:'Indent',     w:90,  resizable:true  },
+  { key:'listSp', label:'List Sp',    w:80,  resizable:true  },
+  { key:'case',   label:'Case',       w:80,  resizable:true  },
+  { key:'deco',   label:'Decoration', w:85,  resizable:true  },
+  { key:'lt',     label:'Lead Trim',  w:85,  resizable:true  },
+  { key:'hangL',  label:'Hang List',  w:70,  resizable:true  },
+  { key:'hangP',  label:'Hang Punct', w:70,  resizable:true  },
+];
 
-  // ── State ─────────────────────────────────────────────────────────────────
-  /** @type {Map<string, object>} id → original snapshot */
-  const originals = new Map();
-  /** @type {Map<string, object>} id → pending edits */
-  const edits = new Map();
-  /** @type {Set<string>} */
-  const selected = new Set();
-  /** @type {Map<string, string>} id → error message from last apply */
-  const rowErrors = new Map();
-  /** @type {string[]} */
-  let visibleIds = [];
-  /** @type {Object.<string, string[]>} family → available styles */
-  let fontMap = {};
+// ─── state ────────────────────────────────────────────────────────────────────────────────
+let colWidths = COLS.map(c => c.w);
+let styles = [];
+let fontMap = {};
+let variableList = [];
+let variableMap = new Map();
+let edits = new Map();
+let applyStatus = new Map();
+let nameFilter = '';
+let bulkVarBindings = {};
 
-  // ── Column widths (px) ────────────────────────────────────────────────────
-  // Indices match <col> order: check, state, name, family, style, size, lh, ls, case, deco
-  const colWidths = [32, 28, 150, 130, 90, 65, 75, 75, 85, 95];
-  let resizingState = null; // { idx, startX, startWidth }
+// ─── header ─────────────────────────────────────────────────────────────────────────────
+function buildHeader() {
+  const cg = document.getElementById('colgroup');
+  const hr = document.getElementById('headerRow');
+  cg.innerHTML = '';
+  hr.innerHTML = '';
+  COLS.forEach((col, i) => {
+    const c = document.createElement('col');
+    c.style.width = colWidths[i] + 'px';
+    cg.appendChild(c);
 
-  function applyColWidths() {
-    const cols = document.querySelectorAll('#colgroup col');
-    cols.forEach((col, i) => { col.style.width = colWidths[i] + 'px'; });
-    const total = colWidths.reduce((a, b) => a + b, 0);
-    document.getElementById('stylesTable').style.width = total + 'px';
-  }
-
-  // ── Auto-resize window to fit content ────────────────────────────────────
-  // We deliberately avoid measuring tbody.offsetHeight because inside a
-  // flex:1 / overflow-y:auto container that value reflects the *constrained*
-  // rendered height, not the full content height, making the calculation
-  // circular. Instead we count rows and multiply by a real row height.
-  const MIN_H = 260, MAX_H = 720;
-  let resizeRaf = null;
-
-  function requestResize() {
-    if (resizeRaf) cancelAnimationFrame(resizeRaf);
-    resizeRaf = requestAnimationFrame(() => {
-      resizeRaf = null;
-
-      const toolbar = document.querySelector('.toolbar');
-      const footer  = document.querySelector('.footer');
-      const thead   = document.querySelector('thead');
-
-      // Row height: measure the first real row, fall back to 29px
-      const firstRow = tableBody.querySelector('tr');
-      const rowH     = firstRow ? firstRow.offsetHeight : 29;
-      const rowCount = tableBody.querySelectorAll('tr').length;
-
-      const h =
-        (toolbar ? toolbar.offsetHeight : 38) +
-        (bulkBar.classList.contains('visible') ? bulkBar.offsetHeight : 0) +
-        (thead   ? thead.offsetHeight   : 32) +
-        rowCount * rowH +
-        (errorPanel.style.display !== 'none' ? errorPanel.offsetHeight : 0) +
-        (footer  ? footer.offsetHeight  : 38) +
-        4; // border allowance
-
-      const w = colWidths.reduce((a, b) => a + b, 0) + 18; // +18 for scrollbar
-      parent.postMessage({ pluginMessage: {
-        type: 'resize',
-        width:  Math.round(Math.max(1440, Math.min(2400, w))),
-        height: Math.round(Math.max(MIN_H, Math.min(MAX_H, h))),
-      }}, '*');
-    });
-  }
-
-  // ── DOM refs ──────────────────────────────────────────────────────────────
-  const searchInput    = document.getElementById('searchInput');
-  const countLabel     = document.getElementById('countLabel');
-  const btnSelectAll   = document.getElementById('btnSelectAll');
-  const btnClearSel    = document.getElementById('btnClearSel');
-  const btnReload      = document.getElementById('btnReload');
-  const btnPreview     = document.getElementById('btnPreview');
-  const bulkBar        = document.getElementById('bulkBar');
-  const bulkCount      = document.getElementById('bulkCount');
-  const bulkFontFamily = document.getElementById('bulkFontFamily');
-  const bulkFontSize   = document.getElementById('bulkFontSize');
-  const bulkCase       = document.getElementById('bulkCase');
-  const btnApplyBulk   = document.getElementById('btnApplyBulk');
-  const tableBody      = document.getElementById('tableBody');
-  const headerCheck    = document.getElementById('headerCheck');
-  const statusMsg      = document.getElementById('statusMsg');
-  const btnDiscardAll  = document.getElementById('btnDiscardAll');
-  const btnApplyAll    = document.getElementById('btnApplyAll');
-  const errorPanel     = document.getElementById('errorPanel');
-  const errorList      = document.getElementById('errorList');
-  const btnDismissErrors = document.getElementById('btnDismissErrors');
-  const previewPanel   = document.getElementById('previewPanel');
-  const previewBody    = document.getElementById('previewBody');
-  const btnClosePreview  = document.getElementById('btnClosePreview');
-  const btnCancelApply   = document.getElementById('btnCancelApply');
-  const btnConfirmApply  = document.getElementById('btnConfirmApply');
-
-  // ── Helpers ───────────────────────────────────────────────────────────────
-  function formatLineHeight(lh) {
-    if (!lh) return '–';
-    if (lh.unit === 'AUTO') return 'Auto';
-    if (lh.unit === 'PERCENT') return lh.value.toFixed(0) + '%';
-    return lh.value.toFixed(0) + 'px';
-  }
-
-  function formatLetterSpacing(ls) {
-    if (!ls) return '–';
-    if (ls.unit === 'PERCENT') return ls.value.toFixed(1) + '%';
-    return ls.value.toFixed(1) + 'px';
-  }
-
-  function textCaseLabel(tc) {
-    const map = {
-      ORIGINAL: 'Original', UPPER: 'UPPER', LOWER: 'lower',
-      TITLE: 'Title', SMALL_CAPS: 'Small Caps', SMALL_CAPS_FORCED: 'Sm Caps+'
-    };
-    return map[tc] || tc;
-  }
-
-  function textDecoLabel(td) {
-    const map = {
-      NONE: 'None', UNDERLINE: 'Underline', STRIKETHROUGH: 'Strikethrough',
-      UNDERLINE_AND_STRIKETHROUGH: 'Both'
-    };
-    return map[td] || td;
-  }
-
-  function getEffective(id, field) {
-    const e = edits.get(id);
-    const o = originals.get(id);
-    if (e && field in e) return e[field];
-    return o ? o[field] : undefined;
-  }
-
-  function setEdit(id, field, value) {
-    const o = originals.get(id);
-    if (!o) return;
-
-    const entry = edits.get(id) || {};
-    const same = JSON.stringify(o[field]) === JSON.stringify(value);
-
-    if (same) {
-      delete entry[field];
+    const th = document.createElement('th');
+    th.style.position = 'relative';
+    if (col.key === 'check') {
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.id = 'selectAll';
+      cb.addEventListener('change', onSelectAll);
+      th.appendChild(cb);
     } else {
-      entry[field] = value;
+      const inner = document.createElement('div');
+      inner.className = 'th-inner';
+      const lbl = document.createElement('span');
+      lbl.className = 'th-label';
+      lbl.textContent = col.label;
+      inner.appendChild(lbl);
+      th.appendChild(inner);
     }
-
-    if (Object.keys(entry).length === 0) {
-      edits.delete(id);
-    } else {
-      edits.set(id, entry);
+    if (col.resizable) {
+      const handle = document.createElement('div');
+      handle.className = 'th-resize';
+      handle.addEventListener('mousedown', e => startResize(e, i));
+      th.appendChild(handle);
     }
-
-    // Editing a row clears its previous apply error
-    rowErrors.delete(id);
-
-    updateFooterButtons();
-    updateRowPendingState(id);
-  }
-
-  function updateFooterButtons() {
-    const hasPending = edits.size > 0;
-    btnPreview.disabled = !hasPending;
-    btnApplyAll.disabled = !hasPending;
-    btnDiscardAll.disabled = !hasPending;
-  }
-
-  function updateRowPendingState(id) {
-    const row = document.querySelector(`tr[data-id="${id}"]`);
-    if (!row) return;
-    const isPending = edits.has(id);
-    const hasError  = rowErrors.has(id);
-    row.classList.toggle('pending', isPending);
-
-    const dot = row.querySelector('.status-dot');
-    if (dot) {
-      if (hasError) {
-        dot.className = 'status-dot err';
-        dot.title = rowErrors.get(id);
-      } else if (isPending) {
-        dot.className = 'status-dot pending';
-        dot.title = 'Unsaved changes';
-      } else {
-        dot.className = 'status-dot';
-        dot.title = '';
-      }
-    }
-
-    row.querySelectorAll('.cell-input[data-field]').forEach(input => {
-      const e = edits.get(id);
-      input.classList.toggle('changed', !!(e && input.dataset.field in e));
-    });
-  }
-
-  function escHtml(s) {
-    return String(s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-
-  // ── Render ────────────────────────────────────────────────────────────────
-  function renderTable() {
-    const query = searchInput.value.trim().toLowerCase();
-    const allIds = [...originals.keys()];
-    const filtered = query
-      ? allIds.filter(id => originals.get(id).name.toLowerCase().includes(query))
-      : allIds;
-
-    visibleIds = filtered;
-    countLabel.textContent = query
-      ? `${filtered.length} of ${allIds.length} styles`
-      : `${allIds.length} style${allIds.length !== 1 ? 's' : ''}`;
-
-    if (filtered.length === 0) {
-      tableBody.innerHTML = `<tr class="empty-row"><td colspan="10">${
-        query ? 'No styles match your search.' : 'No local text styles found in this file.'
-      }</td></tr>`;
-      headerCheck.indeterminate = false;
-      headerCheck.checked = false;
-      requestResize();
-      return;
-    }
-
-    tableBody.innerHTML = filtered.map(buildRow).join('');
-
-    filtered.forEach(id => {
-      const cb = tableBody.querySelector(`tr[data-id="${id}"] input[type="checkbox"]`);
-      if (cb) cb.checked = selected.has(id);
-    });
-
-    updateHeaderCheckbox();
-    attachCellListeners();
-    requestResize();
-  }
-
-  function buildRow(id) {
-    const hasPending = edits.has(id);
-    const hasError   = rowErrors.has(id);
-    const sel        = selected.has(id) ? 'selected' : '';
-    const pendingCls = hasPending ? 'pending' : '';
-
-    let dotClass = 'status-dot';
-    let dotTitle = '';
-    if (hasError) {
-      dotClass = 'status-dot err';
-      dotTitle = rowErrors.get(id) || 'Error';
-    } else if (hasPending) {
-      dotClass = 'status-dot pending';
-      dotTitle = 'Unsaved changes';
-    }
-
-    const e          = edits.get(id) || {};
-    const name       = getEffective(id, 'name') || '';
-    const family     = getEffective(id, 'fontName')?.family || '';
-    const fontStyle  = getEffective(id, 'fontName')?.style || '';
-    const fontSize   = getEffective(id, 'fontSize') || '';
-    const lineHeight = formatLineHeight(getEffective(id, 'lineHeight'));
-    const ls         = formatLetterSpacing(getEffective(id, 'letterSpacing'));
-    const textCase   = getEffective(id, 'textCase') || 'ORIGINAL';
-    const textDeco   = getEffective(id, 'textDecoration') || 'NONE';
-
-    const nc = 'name'      in e ? 'changed' : '';
-    const fc = 'fontName'  in e ? 'changed' : '';
-    const sc = 'fontSize'  in e ? 'changed' : '';
-    const cc = 'textCase'  in e ? 'changed' : '';
-    const dc = 'textDecoration' in e ? 'changed' : '';
-
-    const caseOpts = ['ORIGINAL','UPPER','LOWER','TITLE','SMALL_CAPS','SMALL_CAPS_FORCED']
-      .map(v => `<option value="${v}"${textCase===v?' selected':''}>${textCaseLabel(v)}</option>`)
-      .join('');
-    const decoOpts = ['NONE','UNDERLINE','STRIKETHROUGH','UNDERLINE_AND_STRIKETHROUGH']
-      .map(v => `<option value="${v}"${textDeco===v?' selected':''}>${textDecoLabel(v)}</option>`)
-      .join('');
-
-    return `<tr data-id="${id}" class="${sel} ${pendingCls}">
-      <td class="col-check"><input type="checkbox" class="row-check" /></td>
-      <td class="col-state"><span class="${dotClass}" title="${escHtml(dotTitle)}"></span></td>
-      <td class="col-name"><input class="cell-input ${nc}" data-field="name" data-id="${id}" value="${escHtml(name)}" /></td>
-      <td class="col-family"><input class="cell-input ${fc}" data-field="fontFamily" data-id="${id}" value="${escHtml(family)}" /></td>
-      <td class="col-style"><input class="cell-input ${fc}" data-field="fontStyleVal" data-id="${id}" value="${escHtml(fontStyle)}" /></td>
-      <td class="col-size"><input class="cell-input ${sc}" data-field="fontSize" data-id="${id}" type="number" min="1" max="999" value="${escHtml(String(fontSize))}" /></td>
-      <td class="col-lh">${escHtml(lineHeight)}</td>
-      <td class="col-ls">${escHtml(ls)}</td>
-      <td class="col-case"><select class="cell-input ${cc}" data-field="textCase" data-id="${id}">${caseOpts}</select></td>
-      <td class="col-deco"><select class="cell-input ${dc}" data-field="textDecoration" data-id="${id}">${decoOpts}</select></td>
-    </tr>`;
-  }
-
-  // ── Cell listeners ────────────────────────────────────────────────────────
-  function attachCellListeners() {
-    tableBody.querySelectorAll('.row-check').forEach(cb => {
-      cb.addEventListener('change', onRowCheckChange);
-    });
-    tableBody.querySelectorAll('.cell-input').forEach(input => {
-      input.addEventListener('change', onCellChange);
-    });
-    tableBody.querySelectorAll('tr[data-id]').forEach(row => {
-      row.addEventListener('click', onRowClick);
-    });
-  }
-
-  function onRowClick(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-    toggleSelected(e.currentTarget.dataset.id);
-  }
-
-  function onRowCheckChange(e) {
-    const row = e.target.closest('tr[data-id]');
-    const id = row.dataset.id;
-    if (e.target.checked) { selected.add(id); row.classList.add('selected'); }
-    else                   { selected.delete(id); row.classList.remove('selected'); }
-    updateHeaderCheckbox();
-    updateBulkBar();
-  }
-
-  function toggleSelected(id) {
-    const row = document.querySelector(`tr[data-id="${id}"]`);
-    if (!row) return;
-    const cb = row.querySelector('.row-check');
-    if (selected.has(id)) {
-      selected.delete(id); row.classList.remove('selected'); if (cb) cb.checked = false;
-    } else {
-      selected.add(id);    row.classList.add('selected');    if (cb) cb.checked = true;
-    }
-    updateHeaderCheckbox();
-    updateBulkBar();
-  }
-
-  function onCellChange(e) {
-    const input = e.target;
-    const id    = input.dataset.id;
-    const field = input.dataset.field;
-    if (!id || !field) return;
-
-    if (field === 'name') {
-      setEdit(id, 'name', input.value.trim());
-    } else if (field === 'fontSize') {
-      const v = parseFloat(input.value);
-      if (!isNaN(v) && v > 0) setEdit(id, 'fontSize', v);
-    } else if (field === 'fontFamily' || field === 'fontStyleVal') {
-      const current = getEffective(id, 'fontName') || {};
-      const family  = field === 'fontFamily'   ? input.value.trim() : (current.family || '');
-      const style   = field === 'fontStyleVal' ? input.value.trim() : (current.style  || '');
-      if (family && style) setEdit(id, 'fontName', { family, style });
-    } else if (field === 'textCase') {
-      setEdit(id, 'textCase', input.value);
-    } else if (field === 'textDecoration') {
-      setEdit(id, 'textDecoration', input.value);
-    }
-  }
-
-  // ── Header checkbox ───────────────────────────────────────────────────────
-  function updateHeaderCheckbox() {
-    const selCount = visibleIds.filter(id => selected.has(id)).length;
-    if (selCount === 0) {
-      headerCheck.checked = false; headerCheck.indeterminate = false;
-    } else if (selCount === visibleIds.length) {
-      headerCheck.checked = true;  headerCheck.indeterminate = false;
-    } else {
-      headerCheck.checked = false; headerCheck.indeterminate = true;
-    }
-  }
-
-  headerCheck.addEventListener('change', () => {
-    if (headerCheck.checked) visibleIds.forEach(id => selected.add(id));
-    else                     visibleIds.forEach(id => selected.delete(id));
-    renderTable();
-    updateBulkBar();
+    hr.appendChild(th);
   });
+}
 
-  // ── Bulk bar ──────────────────────────────────────────────────────────────
-  function updateBulkBar() {
-    bulkCount.textContent = selected.size;
-    bulkBar.classList.toggle('visible', selected.size > 0);
-    updateBulkFontStyleControl();
-    requestResize();
-  }
-
-  function updateBulkFontStyleControl() {
-    const wrap = document.getElementById('bulkFontStyleWrap');
-
-    if (selected.size === 0) {
-      wrap.innerHTML = `<input type="text" id="bulkFontStyle" placeholder="–" style="width:100px" disabled />`;
-      return;
-    }
-
-    // Resolve the effective family to use for the dropdown
-    const typedFamily = bulkFontFamily.value.trim();
-    const selFamilies = new Set([...selected].map(id => getEffective(id, 'fontName')?.family || ''));
-    const commonFamily = typedFamily || (selFamilies.size === 1 ? [...selFamilies][0] : null);
-
-    if (commonFamily && fontMap[commonFamily] && fontMap[commonFamily].length > 0) {
-      const opts = fontMap[commonFamily]
-        .map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`)
-        .join('');
-      wrap.innerHTML = `<select id="bulkFontStyle" style="width:100px"><option value="">–</option>${opts}</select>`;
-    } else if (commonFamily) {
-      // Family is specified but not in the font map (e.g. typed manually)
-      wrap.innerHTML = `<input type="text" id="bulkFontStyle" placeholder="e.g. Regular" style="width:100px" />`;
-    } else {
-      // Mixed families and no override typed
-      wrap.innerHTML = `<input type="text" id="bulkFontStyle"
-        placeholder="Mixed families"
-        style="width:100px"
-        disabled
-        title="All selected styles must share the same font family to bulk-edit style" />`;
-    }
-  }
-
-  // Update style dropdown when family input changes
-  bulkFontFamily.addEventListener('input', updateBulkFontStyleControl);
-
-  btnApplyBulk.addEventListener('click', () => {
-    const family   = bulkFontFamily.value.trim();
-    const styleEl  = document.getElementById('bulkFontStyle');
-    const style    = (styleEl && !styleEl.disabled) ? styleEl.value.trim() : '';
-    const size     = parseFloat(bulkFontSize.value);
-    const tc       = bulkCase.value;
-
-    selected.forEach(id => {
-      if (family || style) {
-        const current = getEffective(id, 'fontName') || {};
-        setEdit(id, 'fontName', {
-          family: family || current.family || '',
-          style:  style  || current.style  || '',
-        });
-      }
-      if (!isNaN(size) && size > 0) setEdit(id, 'fontSize', size);
-      if (tc) setEdit(id, 'textCase', tc);
-    });
-
-    bulkFontFamily.value = '';
-    bulkFontSize.value   = '';
-    bulkCase.value       = '';
-    updateBulkFontStyleControl();
-    renderTable();
-  });
-
-  // ── Column resize ─────────────────────────────────────────────────────────
-  document.addEventListener('mousedown', e => {
-    const resizer = e.target.closest('.col-resizer');
-    if (!resizer) return;
-    e.preventDefault();
-    const idx = parseInt(resizer.dataset.colIdx, 10);
-    resizingState = { idx, startX: e.pageX, startWidth: colWidths[idx] };
-    resizer.classList.add('dragging');
-    document.body.style.cursor      = 'col-resize';
-    document.body.style.userSelect  = 'none';
-  });
-
-  document.addEventListener('mousemove', e => {
-    if (!resizingState) return;
-    const delta    = e.pageX - resizingState.startX;
-    const newWidth = Math.max(40, resizingState.startWidth + delta);
-    colWidths[resizingState.idx] = newWidth;
-    applyColWidths();
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (!resizingState) return;
-    const idx = resizingState.idx;
-    resizingState = null;
-    document.body.style.cursor     = '';
-    document.body.style.userSelect = '';
-    const resizer = document.querySelector(`.col-resizer[data-col-idx="${idx}"]`);
-    if (resizer) resizer.classList.remove('dragging');
-  });
-
-  // ── Preview ───────────────────────────────────────────────────────────────
-  function buildPreview() {
-    if (edits.size === 0) return;
-
-    const items = [];
-    edits.forEach((changes, id) => {
-      const orig = originals.get(id);
-      if (!orig) return;
-      const lines = Object.keys(changes).map(field => ({
-        field,
-        oldVal: formatValue(field, orig[field]),
-        newVal: formatValue(field, changes[field]),
-      }));
-      items.push({ name: orig.name, lines });
-    });
-
-    previewBody.innerHTML = items.map(item => `
-      <div class="preview-item">
-        <div class="preview-item-name">${escHtml(item.name)}</div>
-        ${item.lines.map(l => `
-          <div class="preview-change">
-            <span class="preview-change-key">${escHtml(fieldLabel(l.field))}</span>
-            <span class="preview-change-old">${escHtml(l.oldVal)}</span>
-            <span style="color:var(--text-muted)"> → </span>
-            <span class="preview-change-new">${escHtml(l.newVal)}</span>
-          </div>
-        `).join('')}
-      </div>
-    `).join('');
-
-    previewPanel.classList.add('visible');
-  }
-
-  function fieldLabel(field) {
-    const map = {
-      name: 'Name', fontSize: 'Font Size', fontName: 'Font',
-      letterSpacing: 'Letter Spacing', lineHeight: 'Line Height',
-      paragraphIndent: 'Paragraph Indent', paragraphSpacing: 'Paragraph Spacing',
-      textCase: 'Text Case', textDecoration: 'Decoration',
-    };
-    return map[field] || field;
-  }
-
-  function formatValue(field, val) {
-    if (val === undefined || val === null) return '–';
-    if (field === 'fontName')        return `${val.family} ${val.style}`;
-    if (field === 'lineHeight')      return formatLineHeight(val);
-    if (field === 'letterSpacing')   return formatLetterSpacing(val);
-    if (field === 'fontSize')        return `${val}px`;
-    if (field === 'textCase')        return textCaseLabel(val);
-    if (field === 'textDecoration')  return textDecoLabel(val);
-    return String(val);
-  }
-
-  btnPreview.addEventListener('click', buildPreview);
-  btnClosePreview.addEventListener('click', () => previewPanel.classList.remove('visible'));
-  btnCancelApply.addEventListener('click',  () => previewPanel.classList.remove('visible'));
-  btnConfirmApply.addEventListener('click', () => {
-    previewPanel.classList.remove('visible');
-    sendApply();
-  });
-
-  // ── Apply / Discard ───────────────────────────────────────────────────────
-  btnApplyAll.addEventListener('click', sendApply);
-
-  function sendApply() {
-    if (edits.size === 0) return;
-    const editsList = [];
-    edits.forEach((changes, id) => editsList.push({ id, changes }));
-    setStatus('Applying changes…', '');
-    btnApplyAll.disabled  = true;
-    btnDiscardAll.disabled = true;
-    parent.postMessage({ pluginMessage: { type: 'apply-changes', edits: editsList } }, '*');
-  }
-
-  btnDiscardAll.addEventListener('click', () => {
-    edits.clear();
-    rowErrors.clear();
-    dismissErrorPanel();
-    updateFooterButtons();
-    renderTable();
-    setStatus('All changes discarded.', '');
-  });
-
-  // ── Error panel ───────────────────────────────────────────────────────────
-  function showErrorPanel(failures) {
-    errorList.innerHTML = failures.map(f => `
-      <div class="error-list-item">
-        <span class="err-name">${escHtml(f.name)}</span>:
-        <span class="err-msg">${escHtml(f.error || 'Unknown error')}</span>
-      </div>
-    `).join('');
-    errorPanel.style.display = 'block';
-    requestResize();
-  }
-
-  function dismissErrorPanel() {
-    errorPanel.style.display = 'none';
-    errorList.innerHTML = '';
-    requestResize();
-  }
-
-  btnDismissErrors.addEventListener('click', dismissErrorPanel);
-
-  // ── Toolbar actions ───────────────────────────────────────────────────────
-  btnSelectAll.addEventListener('click', () => {
-    visibleIds.forEach(id => selected.add(id));
-    renderTable();
-    updateBulkBar();
-  });
-
-  btnClearSel.addEventListener('click', () => {
-    selected.clear();
-    renderTable();
-    updateBulkBar();
-  });
-
-  btnReload.addEventListener('click', () => {
-    originals.clear(); edits.clear(); selected.clear(); rowErrors.clear();
-    visibleIds = [];
-    tableBody.innerHTML = '<tr class="empty-row"><td colspan="10">Loading styles…</td></tr>';
-    dismissErrorPanel();
-    setStatus('', '');
-    updateFooterButtons();
-    updateBulkBar();
-    parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
-  });
-
-  searchInput.addEventListener('input', renderTable);
-
-  // ── Status ────────────────────────────────────────────────────────────────
-  function setStatus(msg, type) {
-    statusMsg.textContent = msg;
-    statusMsg.className   = type || '';
-  }
-
-  // ── Message handler ───────────────────────────────────────────────────────
-  window.onmessage = (event) => {
-    const msg = event.data.pluginMessage;
-    if (!msg) return;
-
-    if (msg.type === 'styles-loaded') {
-      originals.clear(); edits.clear(); rowErrors.clear();
-      msg.styles.forEach(s => originals.set(s.id, s));
-      fontMap = msg.fonts || {};
-      renderTable();
-      setStatus('', '');
-      dismissErrorPanel();
-      updateBulkBar();
-      updateFooterButtons();
-
-    } else if (msg.type === 'apply-results') {
-      rowErrors.clear();
-      let okCount = 0, failCount = 0;
-
-      msg.results.forEach(r => {
-        if (r.ok) {
-          okCount++;
-          const e = edits.get(r.id);
-          if (e) {
-            const orig = originals.get(r.id);
-            if (orig) Object.assign(orig, e);
-            edits.delete(r.id);
-          }
-          const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
-          if (dot) { dot.className = 'status-dot ok'; dot.title = 'Applied'; }
-          const row = document.querySelector(`tr[data-id="${r.id}"]`);
-          if (row) row.classList.remove('pending');
-        } else {
-          failCount++;
-          rowErrors.set(r.id, r.error || 'Unknown error');
-          const dot = document.querySelector(`tr[data-id="${r.id}"] .status-dot`);
-          if (dot) { dot.className = 'status-dot err'; dot.title = r.error || 'Error'; }
-        }
-      });
-
-      updateFooterButtons();
-
-      if (failCount === 0) {
-        setStatus(`✓ Applied ${okCount} change${okCount !== 1 ? 's' : ''} successfully.`, 'ok');
-        dismissErrorPanel();
-      } else {
-        setStatus(`⚠ ${okCount} succeeded, ${failCount} failed.`, 'err');
-        showErrorPanel(msg.results.filter(r => !r.ok));
-      }
-
-    } else if (msg.type === 'error') {
-      setStatus('Error: ' + msg.message, 'err');
-    }
-  };
-
-  // ── Boot ──────────────────────────────────────────────────────────────────
+// ─── column resize ────────────────────────────────────────────────────────────────────
+let resizeState = null;
+function startResize(e, colIdx) {
+  e.preventDefault();
+  resizeState = { colIdx, startX: e.clientX, startW: colWidths[colIdx] };
+  document.addEventListener('mousemove', onResizeMove);
+  document.addEventListener('mouseup', onResizeUp);
+}
+function onResizeMove(e) {
+  if (!resizeState) return;
+  colWidths[resizeState.colIdx] = Math.max(30, resizeState.startW + (e.clientX - resizeState.startX));
   applyColWidths();
+}
+function onResizeUp() {
+  resizeState = null;
+  document.removeEventListener('mousemove', onResizeMove);
+  document.removeEventListener('mouseup', onResizeUp);
+  requestResize();
+}
+function applyColWidths() {
+  document.querySelectorAll('#colgroup col').forEach((c, i) => { c.style.width = colWidths[i] + 'px'; });
+}
+
+// ─── name filter ─────────────────────────────────────────────────────────────────────────────
+function getFilteredStyles() {
+  if (!nameFilter) return styles;
+  const q = nameFilter.toLowerCase();
+  return styles.filter(s => s.name.toLowerCase().includes(q));
+}
+
+function refreshNameGroupList() {
+  const dl = document.getElementById('nameGroupList');
+  dl.innerHTML = '';
+  const groups = new Set();
+  styles.forEach(s => {
+    const parts = s.name.split('/');
+    for (let i = 1; i < parts.length; i++) {
+      groups.add(parts.slice(0, i).join('/'));
+    }
+  });
+  [...groups].sort().forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = g;
+    dl.appendChild(opt);
+  });
+}
+
+document.getElementById('filterName').addEventListener('input', e => {
+  nameFilter = e.target.value;
+  e.target.classList.toggle('active', !!nameFilter);
+  document.getElementById('clearFilterBtn').style.display = nameFilter ? '' : 'none';
+  renderTable();
+});
+
+document.getElementById('clearFilterBtn').addEventListener('click', () => {
+  nameFilter = '';
+  const inp = document.getElementById('filterName');
+  inp.value = '';
+  inp.classList.remove('active');
+  document.getElementById('clearFilterBtn').style.display = 'none';
+  renderTable();
+});
+
+// ─── edit helpers ───────────────────────────────────────────────────────────────────────────
+function getEdit(id) {
+  if (!edits.has(id)) edits.set(id, { changes: {}, varBindings: {} });
+  return edits.get(id);
+}
+function setChange(id, field, value) {
+  getEdit(id).changes[field] = value;
+  markDirty(id);
+}
+function setVarBinding(id, field, variableId) {
+  getEdit(id).varBindings[field] = variableId;
+  markDirty(id);
+}
+function getEffectiveVar(id, field) {
+  const e = edits.get(id);
+  if (e && field in e.varBindings) return e.varBindings[field];
+  const snap = styles.find(s => s.id === id);
+  return snap ? (snap.boundVars[field] ?? null) : null;
+}
+function getEditedValue(id, field) {
+  const e = edits.get(id);
+  return e && field in e.changes ? e.changes[field] : null;
+}
+function markDirty(id) {
+  const row = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
+  if (row) { row.classList.add('dirty'); updateStateDot(row, id); }
+  updateToolbar();
+}
+function isDirty(id) {
+  const e = edits.get(id);
+  if (!e) return false;
+  return Object.keys(e.changes).length > 0 || Object.keys(e.varBindings).length > 0;
+}
+function updateStateDot(row, id) {
+  const cell = row.querySelector('.state-cell');
+  if (!cell) return;
+  cell.innerHTML = '';
+  const status = applyStatus.get(id);
+  if (status) {
+    const dot = document.createElement('span');
+    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.title = status.error || 'OK';
+    cell.appendChild(dot);
+  } else if (isDirty(id)) {
+    const dot = document.createElement('span');
+    dot.className = 'dot dot-pending';
+    dot.title = 'Unsaved changes';
+    cell.appendChild(dot);
+  }
+}
+
+// ─── selection ────────────────────────────────────────────────────────────────────────────────
+function selectedIds() {
+  return [...document.querySelectorAll('tbody tr input.row-check:checked')]
+    .map(cb => cb.closest('tr').dataset.id);
+}
+function onSelectAll(e) {
+  document.querySelectorAll('tbody tr input.row-check').forEach(cb => { cb.checked = e.target.checked; });
+  updateBulkBar();
+  updateToolbar();
+}
+function updateSelectAll() {
+  const all   = document.querySelectorAll('tbody tr input.row-check').length;
+  const checked = document.querySelectorAll('tbody tr input.row-check:checked').length;
+  const sa = document.getElementById('selectAll');
+  if (!sa) return;
+  sa.indeterminate = checked > 0 && checked < all;
+  sa.checked = all > 0 && checked === all;
+}
+
+// ─── toolbar ──────────────────────────────────────────────────────────────────────────────────
+function updateToolbar() {
+  const dirtyCount = styles.filter(s => isDirty(s.id)).length;
+  const sel = selectedIds();
+  const filtered = getFilteredStyles();
+  const applyBtn = document.getElementById('applyBtn');
+  applyBtn.disabled = dirtyCount === 0;
+  applyBtn.textContent = dirtyCount > 0 ? 'Apply changes (' + dirtyCount + ')' : 'Apply changes';
+  document.getElementById('clearBtn').disabled = dirtyCount === 0;
+  document.getElementById('selInfo').textContent =
+    sel.length ? sel.length + ' selected' :
+    (nameFilter ? filtered.length + ' / ' + styles.length + ' styles' : styles.length + ' styles');
+  updateSelectAll();
+}
+
+// ─── bulk bar ─────────────────────────────────────────────────────────────────────────────────
+function updateBulkBar() {
+  const sel = selectedIds();
+  const bar = document.getElementById('bulkBar');
+  if (sel.length < 2) { bar.style.display = 'none'; updateToolbar(); return; }
+  bar.style.display = 'flex';
+
+  const families = [...new Set(sel.map(id => {
+    const e = edits.get(id);
+    if (e && e.changes.fontName) return e.changes.fontName.family;
+    const s = styles.find(x => x.id === id);
+    return s ? s.fontName.family : null;
+  }).filter(Boolean))];
+  const bbStyle = document.getElementById('bb-style');
+  bbStyle.innerHTML = '<option value="">—</option>';
+  if (families.length === 1 && fontMap[families[0]]) {
+    fontMap[families[0]].forEach(st => {
+      const o = document.createElement('option');
+      o.value = o.textContent = st;
+      bbStyle.appendChild(o);
+    });
+  }
+  updateToolbar();
+}
+
+// ─── bulk variable bindings ────────────────────────────────────────────────────────────────
+document.getElementById('bulkBar').addEventListener('click', e => {
+  const btn = e.target.closest('[data-bulk-field]');
+  if (btn) {
+    e.stopPropagation();
+    openVarPicker(null, btn.dataset.bulkField, btn, true);
+    return;
+  }
+  const clearBtn = e.target.closest('[data-clear-bulk]');
+  if (clearBtn) {
+    delete bulkVarBindings[clearBtn.dataset.clearBulk];
+    updateBulkVarChip(clearBtn.dataset.clearBulk);
+  }
+});
+
+function updateBulkVarChip(field) {
+  const chip = document.getElementById('bb-var-' + field);
+  if (!chip) return;
+  const varId = bulkVarBindings[field];
+  if (varId) {
+    const info = variableMap.get(varId);
+    chip.querySelector('span').textContent = info ? info.name : varId;
+    chip.style.display = 'flex';
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+document.getElementById('applyBulkBtn').addEventListener('click', () => {
+  const sel = selectedIds();
+  if (!sel.length) return;
+
+  const family  = document.getElementById('bb-family').value.trim();
+  const styleSt = document.getElementById('bb-style').value;
+  const size    = parseFloat(document.getElementById('bb-size').value);
+  const lhUnit  = document.getElementById('bb-lhUnit').value;
+  const lhVal   = parseFloat(document.getElementById('bb-lhVal').value);
+  const lsUnit  = document.getElementById('bb-lsUnit').value;
+  const lsVal   = parseFloat(document.getElementById('bb-lsVal').value);
+  const tc      = document.getElementById('bb-case').value;
+  const deco    = document.getElementById('bb-deco').value;
+  const lt      = document.getElementById('bb-lt').value;
+  const paraSp  = parseFloat(document.getElementById('bb-paraSp').value);
+  const indent  = parseFloat(document.getElementById('bb-indent').value);
+  const listSp  = parseFloat(document.getElementById('bb-listSp').value);
+
+  sel.forEach(id => {
+    const snap = styles.find(s => s.id === id);
+    if (!snap) return;
+
+    if (family || styleSt) {
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      setChange(id, 'fontName', { family: family || cur.family, style: styleSt || cur.style });
+    }
+    if (!isNaN(size) && !bulkVarBindings['fontSize'])             setChange(id, 'fontSize', size);
+    if (lhUnit === 'AUTO' && !bulkVarBindings['lineHeight']) {
+      setChange(id, 'lineHeight', { unit: 'AUTO' });
+    } else if (lhUnit && !isNaN(lhVal) && !bulkVarBindings['lineHeight']) {
+      setChange(id, 'lineHeight', { unit: lhUnit, value: lhVal });
+    }
+    if (lsUnit && !isNaN(lsVal))                                  setChange(id, 'letterSpacing', { unit: lsUnit, value: lsVal });
+    if (tc)                                                        setChange(id, 'textCase', tc);
+    if (deco)                                                      setChange(id, 'textDecoration', deco);
+    if (lt)                                                        setChange(id, 'leadingTrim', lt);
+    if (!isNaN(paraSp) && !bulkVarBindings['paragraphSpacing'])   setChange(id, 'paragraphSpacing', paraSp);
+    if (!isNaN(indent) && !bulkVarBindings['paragraphIndent'])    setChange(id, 'paragraphIndent', indent);
+    if (!isNaN(listSp) && !bulkVarBindings['listSpacing'])        setChange(id, 'listSpacing', listSp);
+
+    for (const [field, varId] of Object.entries(bulkVarBindings)) {
+      setVarBinding(id, field, varId);
+    }
+  });
+
+  bulkVarBindings = {};
+  ['fontSize','lineHeight','paragraphSpacing','paragraphIndent','listSpacing'].forEach(updateBulkVarChip);
+  renderTable();
+  sendApply();
+});
+
+// ─── variable picker ───────────────────────────────────────────────────────────────────────
+let vpState = null;
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#varPicker') && !e.target.classList.contains('vb-btn') && !e.target.classList.contains('bb-var-btn')) {
+    closeVarPicker();
+  }
+}, true);
+
+function openVarPicker(id, field, anchorEl, isBulk) {
+  vpState = { id, field, bulk: !!isBulk };
+  const picker = document.getElementById('varPicker');
+  picker.classList.add('open');
+  document.getElementById('varPickerLabel').textContent = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+  document.getElementById('varPickerSearch').value = '';
+  document.getElementById('varPickerClear').style.display = isBulk ? 'none' : '';
+  renderVarPickerList('');
+  const rect = anchorEl.getBoundingClientRect();
+  let top = rect.bottom + 2, left = rect.left;
+  if (left + 260 > window.innerWidth)  left = window.innerWidth - 264;
+  if (top  + 300 > window.innerHeight) top  = rect.top - 302;
+  picker.style.top = top + 'px';
+  picker.style.left = left + 'px';
+  document.getElementById('varPickerSearch').focus();
+}
+function closeVarPicker() {
+  document.getElementById('varPicker').classList.remove('open');
+  vpState = null;
+}
+function renderVarPickerList(query) {
+  const list = document.getElementById('varPickerList');
+  list.innerHTML = '';
+  const q = query.toLowerCase();
+  const filtered = variableList.filter(v =>
+    v.name.toLowerCase().includes(q) || v.collectionName.toLowerCase().includes(q)
+  );
+  if (!filtered.length) {
+    const d = document.createElement('div');
+    d.className = 'vp-none';
+    d.textContent = variableList.length ? 'No matches' : 'No FLOAT variables found';
+    list.appendChild(d);
+    return;
+  }
+  const currentId = vpState ? (
+    vpState.bulk ? bulkVarBindings[vpState.field] : getEffectiveVar(vpState.id, vpState.field)
+  ) : null;
+  filtered.forEach(v => {
+    const item = document.createElement('div');
+    item.className = 'vp-item' + (v.id === currentId ? ' selected' : '');
+    const nm = document.createElement('span'); nm.className = 'vp-name'; nm.textContent = v.name;
+    const col = document.createElement('span'); col.className = 'vp-coll'; col.textContent = v.collectionName;
+    item.appendChild(nm); item.appendChild(col);
+    item.addEventListener('click', () => {
+      if (vpState) {
+        if (vpState.bulk) {
+          bulkVarBindings[vpState.field] = v.id;
+          updateBulkVarChip(vpState.field);
+        } else {
+          setVarBinding(vpState.id, vpState.field, v.id);
+          refreshRow(vpState.id);
+        }
+      }
+      closeVarPicker();
+    });
+    list.appendChild(item);
+  });
+}
+document.getElementById('varPickerSearch').addEventListener('input', e => renderVarPickerList(e.target.value));
+document.getElementById('varPickerClear').addEventListener('click', () => {
+  if (vpState && !vpState.bulk) {
+    setVarBinding(vpState.id, vpState.field, null);
+    refreshRow(vpState.id);
+  }
+  closeVarPicker();
+});
+
+// ─── cell builders ─────────────────────────────────────────────────────────────────────────────
+function makeVbCell(id, field, numericValue, isBound) {
+  const wrap = document.createElement('div');
+  wrap.className = 'vb-wrap' + (isBound ? ' vb-bound' : '');
+  const inp = document.createElement('input');
+  inp.type = isBound ? 'text' : 'number';
+  inp.step = '0.5';
+  if (isBound) {
+    const info = variableMap.get(getEffectiveVar(id, field));
+    inp.value = info ? info.name : '(var)';
+    inp.readOnly = true;
+  } else {
+    inp.value = numericValue;
+    inp.addEventListener('change', e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setChange(id, field, v); });
+  }
+  wrap.appendChild(inp);
+  const btn = document.createElement('button');
+  btn.className = 'vb-btn';
+  btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
+  btn.textContent = '⚡';
+  btn.addEventListener('mousedown', e => e.stopPropagation());
+  btn.addEventListener('click', e => { e.stopPropagation(); openVarPicker(id, field, btn, false); });
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function makeUvVbCell(id, field, uvValue, isBound) {
+  const wrap = document.createElement('div');
+  wrap.className = 'uv-wrap' + (isBound ? ' vb-bound' : '');
+  if (isBound) {
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    const info = variableMap.get(getEffectiveVar(id, field));
+    inp.value = info ? info.name : '(var)';
+    inp.readOnly = true;
+    inp.style.flex = '1';
+    wrap.appendChild(inp);
+  } else {
+    const units = field === 'letterSpacing' ? ['PIXELS','PERCENT'] : ['AUTO','PIXELS','PERCENT'];
+    const sel = document.createElement('select');
+    sel.className = 'unit-sel';
+    units.forEach(u => {
+      const o = document.createElement('option');
+      o.value = o.textContent = u;
+      if (u === uvValue.unit) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', e => {
+      const newUnit = e.target.value;
+      const cur = getEditedValue(id, field) || uvValue;
+      if (newUnit === 'AUTO') {
+        setChange(id, field, { unit: 'AUTO' });
+      } else {
+        setChange(id, field, { unit: newUnit, value: cur.unit === 'AUTO' ? 0 : (cur.value || 0) });
+      }
+      refreshRow(id);
+    });
+    wrap.appendChild(sel);
+    if (uvValue.unit !== 'AUTO') {
+      const inp = document.createElement('input');
+      inp.type = 'number'; inp.step = '0.5';
+      inp.value = uvValue.value != null ? uvValue.value : '';
+      inp.style.flex = '1'; inp.style.minWidth = '0';
+      inp.addEventListener('change', e => {
+        const v = parseFloat(e.target.value);
+        if (!isNaN(v)) setChange(id, field, { unit: uvValue.unit, value: v });
+      });
+      wrap.appendChild(inp);
+    }
+  }
+  const btn = document.createElement('button');
+  btn.className = 'vb-btn';
+  btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
+  btn.textContent = '⚡';
+  btn.addEventListener('mousedown', e => e.stopPropagation());
+  btn.addEventListener('click', e => { e.stopPropagation(); openVarPicker(id, field, btn, false); });
+  wrap.appendChild(btn);
+  return wrap;
+}
+
+function makeSelect(opts, current, onChange) {
+  const sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+  opts.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o;
+    opt.textContent = o.replace(/_/g,' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    if (o === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', e => onChange(e.target.value));
+  return sel;
+}
+
+// ─── row builder ──────────────────────────────────────────────────────────────────────────────
+function buildRow(snap) {
+  const id = snap.id;
+  const e = edits.get(id) || { changes:{}, varBindings:{} };
+  const c = e.changes;
+  const status = applyStatus.get(id);
+
+  const fn     = c.fontName         ?? snap.fontName;
+  const fs     = c.fontSize         ?? snap.fontSize;
+  const lh     = c.lineHeight       ?? snap.lineHeight;
+  const ls     = c.letterSpacing    ?? snap.letterSpacing;
+  const paraSp = c.paragraphSpacing ?? snap.paragraphSpacing;
+  const indent = c.paragraphIndent  ?? snap.paragraphIndent;
+  const listSp = c.listSpacing      ?? snap.listSpacing;
+  const tc     = c.textCase         ?? snap.textCase;
+  const deco   = c.textDecoration   ?? snap.textDecoration;
+  const lt     = c.leadingTrim      ?? snap.leadingTrim;
+  const hangL  = c.hangingList      ?? snap.hangingList;
+  const hangP  = c.hangingPunctuation ?? snap.hangingPunctuation;
+
+  const varFs     = getEffectiveVar(id, 'fontSize');
+  const varLh     = getEffectiveVar(id, 'lineHeight');
+  const varLs     = getEffectiveVar(id, 'letterSpacing');
+  const varParaSp = getEffectiveVar(id, 'paragraphSpacing');
+  const varIndent = getEffectiveVar(id, 'paragraphIndent');
+  const varListSp = getEffectiveVar(id, 'listSpacing');
+
+  const tr = document.createElement('tr');
+  tr.dataset.id = id;
+  if (isDirty(id)) tr.classList.add('dirty');
+
+  function td(content) {
+    const cell = document.createElement('td');
+    if (content instanceof Node) cell.appendChild(content);
+    else if (content !== undefined) cell.textContent = content;
+    return cell;
+  }
+
+  const cbCell = document.createElement('td');
+  const rowCb = document.createElement('input');
+  rowCb.type = 'checkbox'; rowCb.className = 'row-check';
+  rowCb.addEventListener('change', () => { updateBulkBar(); updateToolbar(); });
+  cbCell.appendChild(rowCb);
+  tr.appendChild(cbCell);
+
+  const stateCell = document.createElement('td');
+  stateCell.className = 'state-cell';
+  if (status) {
+    const dot = document.createElement('span');
+    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.title = status.error || 'OK';
+    stateCell.appendChild(dot);
+  } else if (isDirty(id)) {
+    const dot = document.createElement('span');
+    dot.className = 'dot dot-pending';
+    dot.title = 'Unsaved changes';
+    stateCell.appendChild(dot);
+  }
+  tr.appendChild(stateCell);
+
+  const nameInp = document.createElement('input');
+  nameInp.type = 'text'; nameInp.value = c.name ?? snap.name;
+  nameInp.addEventListener('change', ev => setChange(id, 'name', ev.target.value));
+  tr.appendChild(td(nameInp));
+
+  const famInp = document.createElement('input');
+  famInp.type = 'text'; famInp.value = fn.family;
+  famInp.addEventListener('change', ev => {
+    const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+    setChange(id, 'fontName', { family: ev.target.value, style: cur.style });
+    updateBulkBar();
+  });
+  tr.appendChild(td(famInp));
+
+  const styleCell = document.createElement('td');
+  const availStyles = fontMap[fn.family];
+  if (availStyles && availStyles.length) {
+    const sel = document.createElement('select');
+    sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+    availStyles.forEach(st => {
+      const o = document.createElement('option'); o.value = o.textContent = st;
+      if (st === fn.style) o.selected = true;
+      sel.appendChild(o);
+    });
+    sel.addEventListener('change', ev => {
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
+    });
+    styleCell.appendChild(sel);
+  } else {
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.value = fn.style;
+    inp.addEventListener('change', ev => {
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
+    });
+    styleCell.appendChild(inp);
+  }
+  tr.appendChild(styleCell);
+
+  tr.appendChild(td(makeVbCell(id, 'fontSize', fs, !!varFs)));
+  tr.appendChild(td(makeUvVbCell(id, 'lineHeight', lh, !!varLh)));
+  tr.appendChild(td(makeUvVbCell(id, 'letterSpacing', ls, !!varLs)));
+  tr.appendChild(td(makeVbCell(id, 'paragraphSpacing', paraSp, !!varParaSp)));
+  tr.appendChild(td(makeVbCell(id, 'paragraphIndent', indent, !!varIndent)));
+  tr.appendChild(td(makeVbCell(id, 'listSpacing', listSp, !!varListSp)));
+  tr.appendChild(td(makeSelect(['ORIGINAL','UPPER','LOWER','TITLE','SMALL_CAPS','SMALL_CAPS_FORCED'], tc, v => setChange(id, 'textCase', v))));
+  tr.appendChild(td(makeSelect(['NONE','UNDERLINE','STRIKETHROUGH'], deco, v => setChange(id, 'textDecoration', v))));
+  tr.appendChild(td(makeSelect(['NONE','CAP_HEIGHT'], lt, v => setChange(id, 'leadingTrim', v))));
+
+  const hangLCell = document.createElement('td'); hangLCell.style.textAlign = 'center';
+  const hangLCb = document.createElement('input'); hangLCb.type = 'checkbox'; hangLCb.checked = !!hangL;
+  hangLCb.addEventListener('change', ev => setChange(id, 'hangingList', ev.target.checked));
+  hangLCell.appendChild(hangLCb); tr.appendChild(hangLCell);
+
+  const hangPCell = document.createElement('td'); hangPCell.style.textAlign = 'center';
+  const hangPCb = document.createElement('input'); hangPCb.type = 'checkbox'; hangPCb.checked = !!hangP;
+  hangPCb.addEventListener('change', ev => setChange(id, 'hangingPunctuation', ev.target.checked));
+  hangPCell.appendChild(hangPCb); tr.appendChild(hangPCell);
+
+  return tr;
+}
+
+// ─── render ───────────────────────────────────────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
+  getFilteredStyles().forEach(snap => tbody.appendChild(buildRow(snap)));
+  updateToolbar();
+  requestResize();
+}
+
+function refreshRow(id) {
+  const snap = styles.find(s => s.id === id);
+  if (!snap) return;
+  const existing = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
+  if (!existing) return;
+  const wasChecked = existing.querySelector('input.row-check') && existing.querySelector('input.row-check').checked;
+  const newRow = buildRow(snap);
+  existing.replaceWith(newRow);
+  if (wasChecked) { const cb = newRow.querySelector('input.row-check'); if (cb) cb.checked = true; }
+  updateToolbar();
+}
+
+// ─── apply ─────────────────────────────────────────────────────────────────────────────────────
+document.getElementById('applyBtn').addEventListener('click', sendApply);
+document.getElementById('clearBtn').addEventListener('click', () => {
+  edits.clear(); applyStatus.clear();
+  document.getElementById('errorPanel').style.display = 'none';
+  renderTable();
+});
+document.getElementById('reloadBtn').addEventListener('click', () => {
   parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
-})();
+});
+
+function sendApply() {
+  const pending = styles.filter(s => isDirty(s.id));
+  if (!pending.length) return;
+  const editList = pending.map(s => {
+    const e = edits.get(s.id);
+    return { id: s.id, changes: e.changes, varBindings: e.varBindings };
+  });
+  parent.postMessage({ pluginMessage: { type: 'apply-changes', edits: editList } }, '*');
+  document.getElementById('applyBtn').disabled = true;
+}
+
+// ─── messages ──────────────────────────────────────────────────────────────────────────────────
+window.onmessage = event => {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'styles-loaded') {
+    styles = msg.styles;
+    fontMap = msg.fonts || {};
+    variableList = msg.variables || [];
+    variableMap.clear();
+    variableList.forEach(v => variableMap.set(v.id, v));
+    edits.clear(); applyStatus.clear();
+    document.getElementById('errorPanel').style.display = 'none';
+    refreshNameGroupList();
+    renderTable();
+    return;
+  }
+
+  if (msg.type === 'apply-results') {
+    const failed = [];
+    msg.results.forEach(r => {
+      applyStatus.set(r.id, { ok: r.ok, error: r.error });
+      if (r.ok) {
+        const snap = styles.find(s => s.id === r.id);
+        const e = edits.get(r.id);
+        if (snap && e) {
+          Object.assign(snap, e.changes);
+          for (const [field, vid] of Object.entries(e.varBindings)) {
+            if (vid === null) delete snap.boundVars[field];
+            else snap.boundVars[field] = vid;
+          }
+        }
+        edits.delete(r.id);
+      } else { failed.push(r); }
+    });
+    const ep = document.getElementById('errorPanel');
+    if (failed.length) {
+      ep.style.display = 'block';
+      ep.innerHTML = '<strong>Errors (' + failed.length + '):</strong> ' +
+        failed.map(r => escHtml(r.name) + ': ' + escHtml(r.error || 'unknown')).join(' &bull; ');
+    } else { ep.style.display = 'none'; }
+    renderTable();
+    return;
+  }
+
+  if (msg.type === 'error') {
+    const ep = document.getElementById('errorPanel');
+    ep.style.display = 'block';
+    ep.textContent = 'Error: ' + msg.message;
+  }
+};
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── auto-resize ────────────────────────────────────────────────────────────────────────
+let resizeRaf = null;
+function requestResize() {
+  if (resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => {
+    const rows = document.querySelectorAll('#tableBody tr');
+    const rowH = rows.length ? (rows[0].offsetHeight || 28) : 28;
+    const theadH = (document.querySelector('thead') || {offsetHeight:32}).offsetHeight || 32;
+    const toolbarH = document.getElementById('toolbar').offsetHeight;
+    const bulkBar  = document.getElementById('bulkBar');
+    const bulkH    = bulkBar.style.display !== 'none' ? bulkBar.offsetHeight : 0;
+    const ep       = document.getElementById('errorPanel');
+    const epH      = ep.style.display !== 'none' ? ep.offsetHeight : 0;
+    const totalH = Math.min(800, Math.max(300, toolbarH + bulkH + epH + theadH + rows.length * rowH + 8));
+    const totalW = Math.max(800, colWidths.reduce((a,b) => a+b, 0) + 20);
+    parent.postMessage({ pluginMessage: { type: 'resize', width: totalW, height: totalH } }, '*');
+  });
+}
+
+// ─── init ─────────────────────────────────────────────────────────────────────────────────────
+buildHeader();
+parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
 </script>
 </body>
 </html>
