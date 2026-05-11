@@ -1,6 +1,23 @@
 "use strict";
 /// <reference path="./node_modules/@figma/plugin-typings/index.d.ts" />
+const NUMERIC_VAR_FIELDS = [
+    "fontSize",
+    "lineHeight",
+    "letterSpacing",
+    "paragraphSpacing",
+    "paragraphIndent",
+    "listSpacing",
+];
 function snapshotStyle(style) {
+    const boundVars = {};
+    const rawBv = style.boundVariables;
+    if (rawBv) {
+        for (const field of NUMERIC_VAR_FIELDS) {
+            const alias = rawBv[field];
+            if (alias)
+                boundVars[field] = alias.id;
+        }
+    }
     return {
         id: style.id,
         name: style.name,
@@ -12,13 +29,20 @@ function snapshotStyle(style) {
         paragraphSpacing: style.paragraphSpacing,
         textCase: style.textCase,
         textDecoration: style.textDecoration,
+        leadingTrim: style.leadingTrim,
+        listSpacing: style.listSpacing,
+        hangingPunctuation: style.hangingPunctuation,
+        hangingList: style.hangingList,
+        boundVars,
     };
 }
 async function loadStyles() {
     try {
-        const [styles, availableFonts] = await Promise.all([
+        const [styles, availableFonts, localVariables, localCollections] = await Promise.all([
             figma.getLocalTextStylesAsync(),
             figma.listAvailableFontsAsync(),
+            figma.variables.getLocalVariablesAsync("FLOAT"),
+            figma.variables.getLocalVariableCollectionsAsync(),
         ]);
         const snapshots = styles.map(snapshotStyle);
         const fonts = {};
@@ -28,7 +52,21 @@ async function loadStyles() {
                 fonts[family] = [];
             fonts[family].push(style);
         }
-        const msg = { type: "styles-loaded", styles: snapshots, fonts };
+        const collectionNames = {};
+        for (const col of localCollections) {
+            collectionNames[col.id] = col.name;
+        }
+        const variables = localVariables.map((v) => ({
+            id: v.id,
+            name: v.name,
+            collectionName: collectionNames[v.variableCollectionId] || "",
+        }));
+        const msg = {
+            type: "styles-loaded",
+            styles: snapshots,
+            fonts,
+            variables,
+        };
         figma.ui.postMessage(msg);
     }
     catch (err) {
@@ -58,8 +96,7 @@ async function applyChanges(edits) {
             const textStyle = style;
             styleName = textStyle.name;
             const c = edit.changes;
-            // Load the font that will be active after this edit before touching any property.
-            // Figma requires the font to be loaded even for non-fontName changes (e.g. fontSize).
+            // Load the font that will be active after this edit
             const fontToLoad = (_a = c.fontName) !== null && _a !== void 0 ? _a : textStyle.fontName;
             await figma.loadFontAsync(fontToLoad);
             if (c.name !== undefined)
@@ -80,6 +117,26 @@ async function applyChanges(edits) {
                 textStyle.textCase = c.textCase;
             if (c.textDecoration !== undefined)
                 textStyle.textDecoration = c.textDecoration;
+            if (c.leadingTrim !== undefined)
+                textStyle.leadingTrim = c.leadingTrim;
+            if (c.listSpacing !== undefined)
+                textStyle.listSpacing = c.listSpacing;
+            if (c.hangingPunctuation !== undefined)
+                textStyle.hangingPunctuation = c.hangingPunctuation;
+            if (c.hangingList !== undefined)
+                textStyle.hangingList = c.hangingList;
+            // Handle variable bindings
+            for (const [field, variableId] of Object.entries(edit.varBindings)) {
+                if (variableId === null) {
+                    textStyle.setBoundVariable(field, null);
+                }
+                else {
+                    const variable = await figma.variables.getVariableByIdAsync(variableId);
+                    if (!variable)
+                        throw new Error(`Variable not found: ${variableId}`);
+                    textStyle.setBoundVariable(field, variable);
+                }
+            }
             results.push({ id: edit.id, name: styleName, ok: true });
         }
         catch (err) {
@@ -95,8 +152,8 @@ async function applyChanges(edits) {
     figma.ui.postMessage(msg);
 }
 figma.showUI(__html__, {
-    width: 720,
-    height: 540,
+    width: 1440,
+    height: 600,
     title: "Bulk Typography Style Editor",
 });
 figma.ui.onmessage = (raw) => {
