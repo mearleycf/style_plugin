@@ -521,7 +521,7 @@
       const w = colWidths.reduce((a, b) => a + b, 0) + 18; // +18 for scrollbar
       parent.postMessage({ pluginMessage: {
         type: 'resize',
-        width:  Math.round(Math.max(600,  Math.min(1400, w))),
+        width:  Math.round(Math.max(1440, Math.min(2400, w))),
         height: Math.round(Math.max(MIN_H, Math.min(MAX_H, h))),
       }}, '*');
     });
