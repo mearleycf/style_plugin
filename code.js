@@ -94,9 +94,7 @@ async function applyChanges(edits) {
     const msg = { type: "apply-results", results };
     figma.ui.postMessage(msg);
 }
-// resizable was added after the installed typings version; cast is safe
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-figma.showUI(__html__, { width: 1440, height: 540, title: "Bulk Typography Style Editor", resizable: true });
+figma.showUI(__html__, { width: 1440, height: 540, title: "Bulk Typography Style Editor" });
 figma.ui.onmessage = (raw) => {
     const msg = raw;
     if (msg.type === "load-styles") {
