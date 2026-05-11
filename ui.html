@@ -487,6 +487,46 @@
     document.getElementById('stylesTable').style.width = total + 'px';
   }
 
+  // ── Auto-resize window to fit content ────────────────────────────────────
+  // We deliberately avoid measuring tbody.offsetHeight because inside a
+  // flex:1 / overflow-y:auto container that value reflects the *constrained*
+  // rendered height, not the full content height, making the calculation
+  // circular. Instead we count rows and multiply by a real row height.
+  const MIN_H = 260, MAX_H = 720;
+  let resizeRaf = null;
+
+  function requestResize() {
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(() => {
+      resizeRaf = null;
+
+      const toolbar = document.querySelector('.toolbar');
+      const footer  = document.querySelector('.footer');
+      const thead   = document.querySelector('thead');
+
+      // Row height: measure the first real row, fall back to 29px
+      const firstRow = tableBody.querySelector('tr');
+      const rowH     = firstRow ? firstRow.offsetHeight : 29;
+      const rowCount = tableBody.querySelectorAll('tr').length;
+
+      const h =
+        (toolbar ? toolbar.offsetHeight : 38) +
+        (bulkBar.classList.contains('visible') ? bulkBar.offsetHeight : 0) +
+        (thead   ? thead.offsetHeight   : 32) +
+        rowCount * rowH +
+        (errorPanel.style.display !== 'none' ? errorPanel.offsetHeight : 0) +
+        (footer  ? footer.offsetHeight  : 38) +
+        4; // border allowance
+
+      const w = colWidths.reduce((a, b) => a + b, 0) + 18; // +18 for scrollbar
+      parent.postMessage({ pluginMessage: {
+        type: 'resize',
+        width:  Math.round(Math.max(1440, Math.min(2400, w))),
+        height: Math.round(Math.max(MIN_H, Math.min(MAX_H, h))),
+      }}, '*');
+    });
+  }
+
   // ── DOM refs ──────────────────────────────────────────────────────────────
   const searchInput    = document.getElementById('searchInput');
   const countLabel     = document.getElementById('countLabel');
@@ -636,6 +676,7 @@
       }</td></tr>`;
       headerCheck.indeterminate = false;
       headerCheck.checked = false;
+      requestResize();
       return;
     }
 
@@ -648,6 +689,7 @@
 
     updateHeaderCheckbox();
     attachCellListeners();
+    requestResize();
   }
 
   function buildRow(id) {
@@ -790,6 +832,7 @@
     bulkCount.textContent = selected.size;
     bulkBar.classList.toggle('visible', selected.size > 0);
     updateBulkFontStyleControl();
+    requestResize();
   }
 
   function updateBulkFontStyleControl() {
@@ -975,11 +1018,13 @@
       </div>
     `).join('');
     errorPanel.style.display = 'block';
+    requestResize();
   }
 
   function dismissErrorPanel() {
     errorPanel.style.display = 'none';
     errorList.innerHTML = '';
+    requestResize();
   }
 
   btnDismissErrors.addEventListener('click', dismissErrorPanel);
