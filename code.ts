@@ -138,7 +138,11 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
   figma.ui.postMessage(msg);
 }
 
-figma.showUI(__html__, { width: 1440, height: 540, title: "Bulk Typography Style Editor" });
+figma.showUI(__html__, {
+  width: 720,
+  height: 540,
+  title: "Bulk Typography Style Editor",
+});
 
 figma.ui.onmessage = (raw: unknown) => {
   const msg = raw as PluginMessage;
