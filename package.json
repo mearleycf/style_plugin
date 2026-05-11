@@ -2,11 +2,19 @@
   "name": "bulk-typography-style-editor",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
-    "watch": "tsc --watch"
+    "build": "tsc && npm run build:ui",
+    "build:ui": "node scripts/build-ui.mjs",
+    "test": "npm run test:unit && node src/ui-smoke-check.mjs && node src/build-drift-check.mjs",
+    "test:unit": "vitest run",
+    "watch": "tsc --watch",
+    "watch:ui": "tailwindcss -i src/ui/styles.css -o .tmp/ui.css --watch"
   },
   "devDependencies": {
     "@figma/plugin-typings": "^1.97.0",
-    "typescript": "^5.4.0"
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.9"
   }
 }

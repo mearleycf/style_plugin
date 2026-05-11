@@ -1,2 +1,32 @@
+# Dependencies
 node_modules/
+
+# Local editor and OS files
+.DS_Store
 .vscode/
+.idea/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Test and coverage output
+coverage/
+.vitest/
+
+# Build caches and scratch output
+.tmp/
+.vite/
+.cache/
+
+# Package manager caches
+.npm/
+.pnpm-store/
