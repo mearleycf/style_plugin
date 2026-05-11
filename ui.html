@@ -9,7 +9,7 @@
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;background:#fff;color:#1a1a1a;overflow:hidden;height:100vh;display:flex;flex-direction:column}
 
 /* ── toolbar ── */
-#toolbar{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;overflow:hidden}
+#toolbar{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#f5f5f5;border-bottom:1px solid #ddd;flex-shrink:0;flex-wrap:wrap}
 #toolbar button{padding:3px 8px;font-size:11px;border:1px solid #ccc;border-radius:3px;background:#fff;cursor:pointer}
 #toolbar button:hover{background:#e8e8e8}
 #toolbar button:disabled{opacity:.45;cursor:default}
@@ -111,13 +111,14 @@ td input[type=checkbox]{cursor:pointer}
 
 <div id="toolbar">
   <button id="reloadBtn">&#8635; Reload</button>
-  <button id="applyBtn" disabled>Apply changes</button>
-  <button id="clearBtn" disabled>Clear edits</button>
   <div id="filterWrap">
     <input id="filterName" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
     <button id="clearFilterBtn" title="Clear filter">&#x2715;</button>
   </div>
   <span id="selInfo">Loading…</span>
+  <div style="flex:1"></div>
+  <button id="clearBtn" disabled>Clear edits</button>
+  <button id="applyBtn" disabled>Apply changes</button>
 </div>
 
 <datalist id="nameGroupList"></datalist>
@@ -416,9 +417,7 @@ function updateToolbar() {
   const dirtyCount = styles.filter(s => isDirty(s.id)).length;
   const sel = selectedIds();
   const filtered = getFilteredStyles();
-  const applyBtn = document.getElementById('applyBtn');
-  applyBtn.disabled = dirtyCount === 0;
-  applyBtn.textContent = dirtyCount > 0 ? 'Apply changes (' + dirtyCount + ')' : 'Apply changes';
+  document.getElementById('applyBtn').disabled = dirtyCount === 0;
   document.getElementById('clearBtn').disabled = dirtyCount === 0;
   document.getElementById('selInfo').textContent =
     sel.length ? sel.length + ' selected' :
@@ -527,7 +526,6 @@ document.getElementById('applyBulkBtn').addEventListener('click', () => {
   bulkVarBindings = {};
   ['fontSize','lineHeight','paragraphSpacing','paragraphIndent','listSpacing'].forEach(updateBulkVarChip);
   renderTable();
-  sendApply();
 });
 
 // ─── variable picker ───────────────────────────────────────────────────────────────────────
