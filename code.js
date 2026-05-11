@@ -40,6 +40,7 @@ async function loadStyles() {
     }
 }
 async function applyChanges(edits) {
+    var _a;
     const results = [];
     for (const edit of edits) {
         let styleName = edit.id;
@@ -57,6 +58,10 @@ async function applyChanges(edits) {
             const textStyle = style;
             styleName = textStyle.name;
             const c = edit.changes;
+            // Load the font that will be active after this edit before touching any property.
+            // Figma requires the font to be loaded even for non-fontName changes (e.g. fontSize).
+            const fontToLoad = (_a = c.fontName) !== null && _a !== void 0 ? _a : textStyle.fontName;
+            await figma.loadFontAsync(fontToLoad);
             if (c.name !== undefined)
                 textStyle.name = c.name;
             if (c.fontSize !== undefined)

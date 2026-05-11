@@ -104,6 +104,11 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
 
       const c = edit.changes;
 
+      // Load the font that will be active after this edit before touching any property.
+      // Figma requires the font to be loaded even for non-fontName changes (e.g. fontSize).
+      const fontToLoad = c.fontName ?? textStyle.fontName;
+      await figma.loadFontAsync(fontToLoad);
+
       if (c.name !== undefined) textStyle.name = c.name;
       if (c.fontSize !== undefined) textStyle.fontSize = c.fontSize;
       if (c.fontName !== undefined) textStyle.fontName = c.fontName;
