@@ -1,302 +1,93 @@
 /// <reference path="../../node_modules/@figma/plugin-typings/index.d.ts" />
 
-interface PendingEdit {
-  id: string;
-  changes: Partial<Omit<TextStyleViewModel, "id" | "boundVars">>;
-  varBindings: Partial<Record<NumericVarField, string | null>>;
-  // string = bind to this variable ID, null = unbind
-}
+import type { ZodError, ZodIssue } from "zod";
+import type {
+  LetterSpacing,
+  LineHeight,
+  VariableBindableTextField,
+} from "../shared/figma-types";
+import type {
+  ApplyResult,
+  PendingEdit,
+  PluginMessage,
+  ResolvedVarBinding,
+  UIMessage,
+} from "../shared/plugin-message-types";
+import {
+  SUPPORTED_VARIABLE_BINDING_FIELDS,
+  type FontStylesByFamily,
+  type SupportedVariableBindingField,
+  type TextStyleViewModel,
+  type VariableInfo,
+} from "../shared/text-style-types";
 
-interface ApplyResult {
-  id: string;
-  name: string;
-  ok: boolean;
-  error?: string;
-}
-
-type PluginMessage =
-  | { type: "load-styles" }
-  | { type: "apply-changes"; edits: PendingEdit[] }
-  | { type: "resize"; width: number; height: number };
-
-type UIMessage =
-  | {
-      type: "styles-loaded";
-      styles: TextStyleViewModel[];
-      fonts: FontMap;
-      variables: VariableInfo[];
-    }
-  | { type: "apply-results"; results: ApplyResult[] }
-  | { type: "error"; message: string };
-
-type ResolvedVarBinding = {
-  field: NumericVarField;
-  variable: Variable | null;
-};
+import { PluginMessageSchema } from "../shared/plugin-message-schemas";
 
 function postError(message: string): void {
   const msg: UIMessage = { type: "error", message };
   figma.ui.postMessage(msg);
 }
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
+function formatPluginMessageError(error: ZodError): string {
+  const issue = error.issues[0];
+  if (!issue) return "Invalid plugin message";
 
-function isFiniteNumber(value: unknown): value is number {
-  return typeof value === "number" && Number.isFinite(value);
-}
+  const [firstPath, editIndex, section, field, nestedField] = issue.path;
 
-function validatePositiveNumber(
-  value: unknown,
-  typeError: string,
-  rangeError: string,
-): number {
-  if (!isFiniteNumber(value)) {
-    throw new Error(typeError);
+  if (firstPath === "width" || firstPath === "height") {
+    if (issue.code === "invalid_type") {
+      return "resize message must include numeric width and height";
+    }
+    if (issue.code === "too_small") {
+      return "resize message width and height must be positive numbers";
+    }
   }
-  if (value <= 0) {
-    throw new Error(rangeError);
+
+  if (
+    issue.code === "invalid_key" &&
+    firstPath === "edits" &&
+    typeof editIndex === "number" &&
+    section === "varBindings" &&
+    typeof field === "string"
+  ) {
+    return `Edit ${editIndex} includes unsupported variable binding field "${field}"`;
   }
-  return value;
-}
 
-function validateNonNegativeNumber(
-  value: unknown,
-  typeError: string,
-  rangeError: string,
-): number {
-  if (!isFiniteNumber(value)) {
-    throw new Error(typeError);
+  if (
+    issue.code === "too_small" &&
+    firstPath === "edits" &&
+    typeof editIndex === "number" &&
+    section === "changes" &&
+    typeof field === "string"
+  ) {
+    return formatChangeRangeError(issue, editIndex, field, nestedField);
   }
-  if (value < 0) {
-    throw new Error(rangeError);
-  }
-  return value;
+
+  return "Invalid plugin message";
 }
 
-function isOneOf<T extends string>(
-  value: unknown,
-  values: readonly T[],
-): value is T {
-  return typeof value === "string" && values.includes(value as T);
-}
-
-function isNumericVarField(value: string): value is NumericVarField {
-  return (NUMERIC_VAR_FIELDS as readonly string[]).includes(value);
-}
-
-function isFontName(value: unknown): value is FontName {
-  return (
-    isRecord(value) &&
-    typeof value.family === "string" &&
-    typeof value.style === "string"
-  );
-}
-
-function isLetterSpacing(value: unknown): value is LetterSpacing {
-  return (
-    isRecord(value) &&
-    isFiniteNumber(value.value) &&
-    (value.unit === "PIXELS" || value.unit === "PERCENT")
-  );
-}
-
-function isLineHeight(value: unknown): value is LineHeight {
-  if (!isRecord(value)) return false;
-  if (value.unit === "AUTO") return true;
-  return (
-    isFiniteNumber(value.value) &&
-    value.value > 0 &&
-    (value.unit === "PIXELS" || value.unit === "PERCENT")
-  );
-}
-
-function validateStyleChanges(
-  value: unknown,
+function formatChangeRangeError(
+  issue: ZodIssue,
   editIndex: number,
-): PendingEdit["changes"] {
-  if (!isRecord(value)) {
-    throw new Error(`Edit ${editIndex} changes must be an object`);
+  field: string,
+  nestedField: PropertyKey | undefined,
+): string {
+  if (field === "lineHeight" && nestedField === "value") {
+    return `Edit ${editIndex} lineHeight value must be greater than 0`;
   }
 
-  const changes: PendingEdit["changes"] = {};
-  for (const [field, fieldValue] of Object.entries(value)) {
-    switch (field) {
-      case "name":
-        if (typeof fieldValue !== "string") {
-          throw new Error(`Edit ${editIndex} name must be a string`);
-        }
-        changes.name = fieldValue;
-        break;
-      case "fontSize":
-        changes.fontSize = validatePositiveNumber(
-          fieldValue,
-          `Edit ${editIndex} fontSize must be a number`,
-          `Edit ${editIndex} fontSize must be greater than 0`,
-        );
-        break;
-      case "fontName":
-        if (!isFontName(fieldValue)) {
-          throw new Error(`Edit ${editIndex} fontName must include family and style`);
-        }
-        changes.fontName = fieldValue;
-        break;
-      case "letterSpacing":
-        if (!isLetterSpacing(fieldValue)) {
-          throw new Error(`Edit ${editIndex} letterSpacing is invalid`);
-        }
-        changes.letterSpacing = fieldValue;
-        break;
-      case "lineHeight":
-        if (!isLineHeight(fieldValue)) {
-          if (
-            isRecord(fieldValue) &&
-            (fieldValue.unit === "PIXELS" || fieldValue.unit === "PERCENT") &&
-            isFiniteNumber(fieldValue.value) &&
-            fieldValue.value <= 0
-          ) {
-            throw new Error(`Edit ${editIndex} lineHeight value must be greater than 0`);
-          }
-          throw new Error(`Edit ${editIndex} lineHeight is invalid`);
-        }
-        changes.lineHeight = fieldValue;
-        break;
-      case "paragraphIndent":
-        changes.paragraphIndent = validateNonNegativeNumber(
-          fieldValue,
-          `Edit ${editIndex} paragraphIndent must be a number`,
-          `Edit ${editIndex} paragraphIndent must be greater than or equal to 0`,
-        );
-        break;
-      case "paragraphSpacing":
-        changes.paragraphSpacing = validateNonNegativeNumber(
-          fieldValue,
-          `Edit ${editIndex} paragraphSpacing must be a number`,
-          `Edit ${editIndex} paragraphSpacing must be greater than or equal to 0`,
-        );
-        break;
-      case "textCase":
-        if (!isOneOf(fieldValue, TEXT_CASE_VALUES)) {
-          throw new Error(`Edit ${editIndex} textCase is invalid`);
-        }
-        changes.textCase = fieldValue;
-        break;
-      case "textDecoration":
-        if (!isOneOf(fieldValue, TEXT_DECORATION_VALUES)) {
-          throw new Error(`Edit ${editIndex} textDecoration is invalid`);
-        }
-        changes.textDecoration = fieldValue;
-        break;
-      case "leadingTrim":
-        if (!isOneOf(fieldValue, LEADING_TRIM_VALUES)) {
-          throw new Error(`Edit ${editIndex} leadingTrim is invalid`);
-        }
-        changes.leadingTrim = fieldValue;
-        break;
-      case "listSpacing":
-        changes.listSpacing = validateNonNegativeNumber(
-          fieldValue,
-          `Edit ${editIndex} listSpacing must be a number`,
-          `Edit ${editIndex} listSpacing must be greater than or equal to 0`,
-        );
-        break;
-      case "hangingPunctuation":
-        if (typeof fieldValue !== "boolean") {
-          throw new Error(`Edit ${editIndex} hangingPunctuation must be a boolean`);
-        }
-        changes.hangingPunctuation = fieldValue;
-        break;
-      case "hangingList":
-        if (typeof fieldValue !== "boolean") {
-          throw new Error(`Edit ${editIndex} hangingList must be a boolean`);
-        }
-        changes.hangingList = fieldValue;
-        break;
-      default:
-        throw new Error(`Edit ${editIndex} includes unsupported change field "${field}"`);
-    }
+  if (issue.code === "too_small" && !issue.inclusive) {
+    return `Edit ${editIndex} ${field} must be greater than 0`;
   }
 
-  return changes;
-}
-
-function validateVarBindings(
-  value: unknown,
-  editIndex: number,
-): PendingEdit["varBindings"] {
-  if (!isRecord(value)) {
-    throw new Error(`Edit ${editIndex} varBindings must be an object`);
-  }
-
-  const varBindings: PendingEdit["varBindings"] = {};
-  for (const [field, variableId] of Object.entries(value)) {
-    if (!isNumericVarField(field)) {
-      throw new Error(
-        `Edit ${editIndex} includes unsupported variable binding field "${field}"`,
-      );
-    }
-    if (variableId !== null && typeof variableId !== "string") {
-      throw new Error(`Edit ${editIndex} variable binding for ${field} is invalid`);
-    }
-    varBindings[field] = variableId;
-  }
-
-  return varBindings;
-}
-
-function validatePendingEdit(value: unknown, editIndex: number): PendingEdit {
-  if (!isRecord(value)) {
-    throw new Error(`Edit ${editIndex} must be an object`);
-  }
-  if (typeof value.id !== "string" || value.id.length === 0) {
-    throw new Error(`Edit ${editIndex} id must be a non-empty string`);
-  }
-
-  return {
-    id: value.id,
-    changes: validateStyleChanges(value.changes ?? {}, editIndex),
-    varBindings: validateVarBindings(value.varBindings ?? {}, editIndex),
-  };
-}
-
-function validatePluginMessage(raw: unknown): PluginMessage {
-  if (!isRecord(raw) || typeof raw.type !== "string") {
-    throw new Error("Plugin message must include a type");
-  }
-
-  if (raw.type === "load-styles") {
-    return { type: "load-styles" };
-  }
-
-  if (raw.type === "apply-changes") {
-    if (!Array.isArray(raw.edits)) {
-      throw new Error("apply-changes message must include an edits array");
-    }
-    return {
-      type: "apply-changes",
-      edits: raw.edits.map(validatePendingEdit),
-    };
-  }
-
-  if (raw.type === "resize") {
-    if (!isFiniteNumber(raw.width) || !isFiniteNumber(raw.height)) {
-      throw new Error("resize message must include numeric width and height");
-    }
-    if (raw.width <= 0 || raw.height <= 0) {
-      throw new Error("resize message width and height must be positive numbers");
-    }
-    return { type: "resize", width: raw.width, height: raw.height };
-  }
-
-  throw new Error(`Unsupported plugin message type "${raw.type}"`);
+  return `Edit ${editIndex} ${field} must be greater than or equal to 0`;
 }
 
 function toTextStyleViewModel(style: TextStyle): TextStyleViewModel {
-  const boundVars: Partial<Record<NumericVarField, string>> = {};
+  const boundVars: Partial<Record<SupportedVariableBindingField, string>> = {};
   const rawBv = style.boundVariables;
   if (rawBv) {
-    for (const field of NUMERIC_VAR_FIELDS) {
+    for (const field of SUPPORTED_VARIABLE_BINDING_FIELDS) {
       const alias = rawBv[field as VariableBindableTextField];
       if (alias) boundVars[field] = alias.id;
     }
@@ -332,7 +123,7 @@ async function loadStyles(): Promise<void> {
 
     const textStyleViewModels = styles.map(toTextStyleViewModel);
 
-    const fonts: FontMap = {};
+    const fonts: FontStylesByFamily = {};
     for (const font of availableFonts) {
       const { family, style } = font.fontName;
       if (!fonts[family]) fonts[family] = [];
@@ -425,13 +216,13 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
 async function preflightEdit(
   textStyle: TextStyle,
   edit: PendingEdit,
-): Promise<ResolvedVarBinding[]> {
+): Promise<ResolvedVarBinding<Variable>[]> {
   const fontToLoad = edit.changes.fontName ?? textStyle.fontName;
   await figma.loadFontAsync(fontToLoad);
 
-  const resolvedVarBindings: ResolvedVarBinding[] = [];
+  const resolvedVarBindings: ResolvedVarBinding<Variable>[] = [];
   for (const [field, variableId] of Object.entries(edit.varBindings) as [
-    NumericVarField,
+    SupportedVariableBindingField,
     string | null,
   ][]) {
     if (variableId === null) {
@@ -450,6 +241,20 @@ async function preflightEdit(
   return resolvedVarBindings;
 }
 
+function handlePluginMessage(msg: PluginMessage): void {
+  if (msg.type === "load-styles") {
+    loadStyles();
+    return;
+  }
+
+  if (msg.type === "apply-changes") {
+    applyChanges(msg.edits);
+    return;
+  }
+
+  figma.ui.resize(msg.width, msg.height);
+}
+
 figma.showUI(__html__, {
   width: 1440,
   height: 600,
@@ -458,14 +263,13 @@ figma.showUI(__html__, {
 
 figma.ui.onmessage = (raw: unknown) => {
   try {
-    const msg = validatePluginMessage(raw);
-    if (msg.type === "load-styles") {
-      loadStyles();
-    } else if (msg.type === "apply-changes") {
-      applyChanges(msg.edits);
-    } else if (msg.type === "resize") {
-      figma.ui.resize(msg.width, msg.height);
+    const result = PluginMessageSchema.safeParse(raw);
+
+    if (!result.success) {
+      throw new Error(formatPluginMessageError(result.error));
     }
+
+    handlePluginMessage(result.data);
   } catch (err) {
     postError(err instanceof Error ? err.message : String(err));
   }

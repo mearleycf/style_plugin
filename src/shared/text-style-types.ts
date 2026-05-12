@@ -1,6 +1,8 @@
 import type {
   FontName,
+  LeadingTrim,
   TextCase,
+  TextDecoration,
   TextStyle,
   VariableBindableTextField,
 } from "./figma-types";
@@ -13,14 +15,35 @@ export const SUPPORTED_VARIABLE_BINDING_FIELDS = [
   "paragraphIndent",
 ] as const satisfies readonly VariableBindableTextField[];
 
-type SupportedVariableBindingField = (typeof SUPPORTED_VARIABLE_BINDING_FIELDS)[number];
+export type SupportedVariableBindingField =
+  (typeof SUPPORTED_VARIABLE_BINDING_FIELDS)[number];
 
-type FontFamily = FontName["family"];
-type FontStyle = FontName["style"];
+export type FontFamily = FontName["family"];
+export type FontStyle = FontName["style"];
 
 export type FontStylesByFamily = Record<FontFamily, FontStyle[]>;
 
-export type SupportedTextCase = TextCase[];
+export const TEXT_CASE_VALUES = [
+  "ORIGINAL",
+  "UPPER",
+  "LOWER",
+  "TITLE",
+  "SMALL_CAPS",
+  "SMALL_CAPS_FORCED",
+] as const satisfies readonly TextCase[];
+
+export const TEXT_DECORATION_VALUES = [
+  "NONE",
+  "UNDERLINE",
+  "STRIKETHROUGH",
+] as const satisfies readonly TextDecoration[];
+
+export const LEADING_TRIM_VALUES = [
+  "CAP_HEIGHT",
+  "NONE",
+] as const satisfies readonly LeadingTrim[];
+
+export type SupportedTextCase = TextCase;
 
 export type TextStyleViewModel = Pick<
   TextStyle,
@@ -42,8 +65,8 @@ export type TextStyleViewModel = Pick<
   boundVars: Partial<Record<SupportedVariableBindingField, string>>;
 }
 
-type VariableInfo = {
-  id: string
-  name: string
-  collectionName: string
-}
+export type VariableInfo = {
+  id: string;
+  name: string;
+  collectionName: string;
+};

@@ -4,8 +4,9 @@
     "lib": ["ES2017"],
     "strict": true,
     "moduleResolution": "node",
-    "outFile": "code.js",
-    "noEmit": false
+    "module": "ESNext",
+    "allowSyntheticDefaultImports": true,
+    "noEmit": true
   },
-  "include": ["src/backend/code.ts"]
+  "include": ["src/**/*.ts"]
 }

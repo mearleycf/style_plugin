@@ -1,26 +1,10 @@
 import { z } from "zod";
-import type { TextCase, TextDecoration, LeadingTrim } from "./figma-types";
-import { SUPPORTED_VARIABLE_BINDING_FIELDS } from "./text-style-types";
-
-export const TEXT_CASE_VALUES = [
-  "ORIGINAL",
-  "UPPER",
-  "LOWER",
-  "TITLE",
-  "SMALL_CAPS",
-  "SMALL_CAPS_FORCED",
-] as const satisfies readonly TextCase[];
-
-export const TEXT_DECORATION_VALUES = [
-  "NONE",
-  "UNDERLINE",
-  "STRIKETHROUGH",
-] as const satisfies readonly TextDecoration[];
-
-export const LEADING_TRIM_VALUES = [
-  "CAP_HEIGHT",
-  "NONE",
-] as const satisfies readonly LeadingTrim[];
+import {
+  LEADING_TRIM_VALUES,
+  SUPPORTED_VARIABLE_BINDING_FIELDS,
+  TEXT_CASE_VALUES,
+  TEXT_DECORATION_VALUES,
+} from "./text-style-types";
 
 export const LetterSpacingSchema = z.object ({
   value: z.number(),
