@@ -1,9 +1,10 @@
 // ─── cell builders ─────────────────────────────────────────────────────────────────────────────
 function makeVbCell(id, field, numericValue, isBound) {
   const wrap = document.createElement('div');
-  wrap.className = 'vb-wrap' + (isBound ? ' vb-bound' : '');
+  wrap.className = 'vb-wrap flex w-full items-center gap-0.5' + (isBound ? ' vb-bound' : '');
   const inp = document.createElement('input');
   inp.type = isBound ? 'text' : 'number';
+  inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1' + (isBound ? ' text-brand-primary italic' : '');
   inp.step = '0.5';
   if (isBound) {
     const info = variableMap.get(getEffectiveVar(id, field));
@@ -15,7 +16,7 @@ function makeVbCell(id, field, numericValue, isBound) {
   }
   wrap.appendChild(inp);
   const btn = document.createElement('button');
-  btn.className = 'vb-btn';
+  btn.className = 'vb-btn h-4 w-4 shrink-0 cursor-pointer rounded-sm border p-0 text-center text-[9px] leading-[14px] ' + (isBound ? 'border-brand-primary bg-ui-bound text-brand-primary' : 'border-ui-tertiary bg-ui-surface text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary');
   btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
   btn.textContent = '⚡';
   btn.addEventListener('mousedown', e => e.stopPropagation());
@@ -27,6 +28,7 @@ function makeVbCell(id, field, numericValue, isBound) {
 function makeNumericCell(id, field, numericValue) {
   const inp = document.createElement('input');
   inp.type = 'number';
+  inp.className = CELL_INPUT_CLASSES;
   inp.step = '0.5';
   inp.value = numericValue;
   inp.addEventListener('change', e => {
@@ -38,19 +40,19 @@ function makeNumericCell(id, field, numericValue) {
 
 function makeUvVbCell(id, field, uvValue, isBound) {
   const wrap = document.createElement('div');
-  wrap.className = 'uv-wrap' + (isBound ? ' vb-bound' : '');
+  wrap.className = 'uv-wrap flex w-full items-center gap-0.5' + (isBound ? ' vb-bound' : '');
   if (isBound) {
     const inp = document.createElement('input');
     inp.type = 'text';
+    inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1 text-brand-primary italic';
     const info = variableMap.get(getEffectiveVar(id, field));
     inp.value = info ? info.name : '(var)';
     inp.readOnly = true;
-    inp.style.flex = '1';
     wrap.appendChild(inp);
   } else {
     const units = field === 'letterSpacing' ? ['PIXELS','PERCENT'] : ['AUTO','PIXELS','PERCENT'];
     const sel = document.createElement('select');
-    sel.className = 'unit-sel';
+    sel.className = CELL_INPUT_CLASSES + ' unit-sel w-[52px] shrink-0 text-micro';
     units.forEach(u => {
       const o = document.createElement('option');
       o.value = o.textContent = u;
@@ -71,8 +73,8 @@ function makeUvVbCell(id, field, uvValue, isBound) {
     if (uvValue.unit !== 'AUTO') {
       const inp = document.createElement('input');
       inp.type = 'number'; inp.step = '0.5';
+      inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1';
       inp.value = uvValue.value != null ? uvValue.value : '';
-      inp.style.flex = '1'; inp.style.minWidth = '0';
       inp.addEventListener('change', e => {
         const v = parseFloat(e.target.value);
         if (!isNaN(v)) setChange(id, field, { unit: uvValue.unit, value: v });
@@ -81,7 +83,7 @@ function makeUvVbCell(id, field, uvValue, isBound) {
     }
   }
   const btn = document.createElement('button');
-  btn.className = 'vb-btn';
+  btn.className = 'vb-btn h-4 w-4 shrink-0 cursor-pointer rounded-sm border p-0 text-center text-[9px] leading-[14px] ' + (isBound ? 'border-brand-primary bg-ui-bound text-brand-primary' : 'border-ui-tertiary bg-ui-surface text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary');
   btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
   btn.textContent = '⚡';
   btn.addEventListener('mousedown', e => e.stopPropagation());
@@ -92,7 +94,7 @@ function makeUvVbCell(id, field, uvValue, isBound) {
 
 function makeSelect(opts, current, onChange) {
   const sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+  sel.className = CELL_INPUT_CLASSES;
   opts.forEach(o => {
     const opt = document.createElement('option');
     opt.value = o;
@@ -131,33 +133,39 @@ function buildRow(viewModel) {
   const varIndent = getEffectiveVar(id, 'paragraphIndent');
 
   const tr = document.createElement('tr');
+  tr.className = TABLE_ROW_CLASSES;
   tr.dataset.id = id;
-  if (isDirty(id)) tr.classList.add('dirty');
+  if (isDirty(id)) {
+    tr.classList.add('dirty');
+    tr.classList.add(...DIRTY_ROW_CLASSES);
+  }
 
   function td(content) {
     const cell = document.createElement('td');
+    cell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
     if (content instanceof Node) cell.appendChild(content);
     else if (content !== undefined) cell.textContent = content;
     return cell;
   }
 
   const cbCell = document.createElement('td');
+  cbCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
   const rowCb = document.createElement('input');
-  rowCb.type = 'checkbox'; rowCb.className = 'row-check';
+  rowCb.type = 'checkbox'; rowCb.className = 'row-check cursor-pointer';
   rowCb.addEventListener('change', () => { updateBulkBar(); updateToolbar(); });
   cbCell.appendChild(rowCb);
   tr.appendChild(cbCell);
 
   const stateCell = document.createElement('td');
-  stateCell.className = 'state-cell';
+  stateCell.className = 'state-cell overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   if (status) {
     const dot = document.createElement('span');
-    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full ' + (status.ok ? 'bg-status-ok' : 'bg-status-error');
     dot.title = status.error || 'OK';
     stateCell.appendChild(dot);
   } else if (isDirty(id)) {
     const dot = document.createElement('span');
-    dot.className = 'dot dot-pending';
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full bg-status-pending';
     dot.title = 'Unsaved changes';
     stateCell.appendChild(dot);
   }
@@ -165,11 +173,13 @@ function buildRow(viewModel) {
 
   const nameInp = document.createElement('input');
   nameInp.type = 'text'; nameInp.value = c.name ?? viewModel.name;
+  nameInp.className = CELL_INPUT_CLASSES;
   nameInp.addEventListener('change', ev => setChange(id, 'name', ev.target.value));
   tr.appendChild(td(nameInp));
 
   const famInp = document.createElement('input');
   famInp.type = 'text'; famInp.value = fn.family;
+  famInp.className = CELL_INPUT_CLASSES;
   famInp.addEventListener('change', ev => {
     const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
     const nextFamily = ev.target.value.trim() || cur.family;
@@ -180,10 +190,11 @@ function buildRow(viewModel) {
   tr.appendChild(td(famInp));
 
   const styleCell = document.createElement('td');
+  styleCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
   const availStyles = fontMap[fn.family];
   if (availStyles && availStyles.length) {
     const sel = document.createElement('select');
-    sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+    sel.className = CELL_INPUT_CLASSES;
     availStyles.forEach(st => {
       const o = document.createElement('option'); o.value = o.textContent = st;
       if (st === fn.style) o.selected = true;
@@ -197,6 +208,7 @@ function buildRow(viewModel) {
   } else {
     const inp = document.createElement('input');
     inp.type = 'text'; inp.value = fn.style;
+    inp.className = CELL_INPUT_CLASSES;
     inp.addEventListener('change', ev => {
       const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
       setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
@@ -215,13 +227,15 @@ function buildRow(viewModel) {
   tr.appendChild(td(makeSelect(['NONE','UNDERLINE','STRIKETHROUGH'], deco, v => setChange(id, 'textDecoration', v))));
   tr.appendChild(td(makeSelect(['NONE','CAP_HEIGHT'], lt, v => setChange(id, 'leadingTrim', v))));
 
-  const hangLCell = document.createElement('td'); hangLCell.style.textAlign = 'center';
+  const hangLCell = document.createElement('td'); hangLCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   const hangLCb = document.createElement('input'); hangLCb.type = 'checkbox'; hangLCb.checked = !!hangL;
+  hangLCb.className = 'cursor-pointer';
   hangLCb.addEventListener('change', ev => setChange(id, 'hangingList', ev.target.checked));
   hangLCell.appendChild(hangLCb); tr.appendChild(hangLCell);
 
-  const hangPCell = document.createElement('td'); hangPCell.style.textAlign = 'center';
+  const hangPCell = document.createElement('td'); hangPCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   const hangPCb = document.createElement('input'); hangPCb.type = 'checkbox'; hangPCb.checked = !!hangP;
+  hangPCb.className = 'cursor-pointer';
   hangPCb.addEventListener('change', ev => setChange(id, 'hangingPunctuation', ev.target.checked));
   hangPCell.appendChild(hangPCb); tr.appendChild(hangPCell);
 

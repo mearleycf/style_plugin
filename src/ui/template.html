@@ -8,112 +8,112 @@
 /* STYLE_INJECT */
 </style>
 </head>
-<body>
+<body class="box-border m-0 flex h-screen flex-col overflow-hidden bg-ui-primary p-0 font-ui text-ui text-ui-text [&_*]:box-border [&_*]:m-0 [&_*]:p-0">
 
-<div id="toolbar">
-  <button id="reloadBtn">&#8635; Reload</button>
-  <div id="filterWrap">
-    <input id="filterName" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
-    <button id="clearFilterBtn" title="Clear filter">&#x2715;</button>
+<div id="toolbar" class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-ui-tertiary bg-ui-secondary px-2 py-1.5">
+  <button id="reloadBtn" class="cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-2 py-[3px] text-ui hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45">&#8635; Reload</button>
+  <div id="filterWrap" class="flex min-w-40 max-w-[340px] flex-1 items-center gap-1">
+    <input id="filterName" class="flex-1 rounded border border-ui-tertiary px-1.5 py-[3px] text-ui outline-none focus:border-brand-primary" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
+    <button id="clearFilterBtn" class="hidden cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-1.5 py-0.5 text-micro hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45" title="Clear filter">&#x2715;</button>
   </div>
-  <span id="selInfo">Loading…</span>
-  <div class="toolbar-spacer"></div>
-  <button id="clearBtn" disabled>Clear edits</button>
-  <button id="applyBtn" disabled>Apply changes</button>
+  <span id="selInfo" class="text-ui text-ui-muted">Loading…</span>
+  <div class="flex-1"></div>
+  <button id="clearBtn" class="cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-2 py-[3px] text-ui hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45" disabled>Clear edits</button>
+  <button id="applyBtn" class="cursor-pointer rounded border border-brand-primary bg-brand-primary px-2 py-[3px] text-ui font-semibold text-ui-surface hover:bg-brand-hover disabled:cursor-default disabled:opacity-45" disabled>Apply changes</button>
 </div>
 
 <datalist id="nameGroupList"></datalist>
 
-<div id="bulkBar">
-  <strong class="bulk-title">Bulk edit selected:</strong>
+<div id="bulkBar" class="hidden shrink-0 flex-wrap items-center gap-1.5 border-b border-ui-surface bg-ui-dirty px-2 py-1 text-ui">
+  <strong class="mr-1 text-ui">Bulk edit selected:</strong>
 
-  <div class="bb-group"><label>Family</label><input id="bb-family" class="bulk-family-input" type="text" placeholder="Family…"/></div>
-  <div class="bb-group"><label>Style</label><select id="bb-style"><option value="">—</option></select></div>
-  <div class="bb-sep"></div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Family</label><input id="bb-family" class="w-[100px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="text" placeholder="Family…"/></div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Style</label><select id="bb-style" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option></select></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>Size</label>
-    <input id="bb-size" type="number" min="1" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="fontSize" title="Bind variable to font size">⚡</button>
-    <div id="bb-var-fontSize" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="fontSize">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Size</label>
+    <input id="bb-size" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="1" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="fontSize" title="Bind variable to font size">⚡</button>
+    <div id="bb-var-fontSize" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="fontSize">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>LH</label>
-    <select id="bb-lhUnit"><option value="">—</option><option>AUTO</option><option>PIXELS</option><option>PERCENT</option></select>
-    <input id="bb-lhVal" type="number" min="0" step="0.5" placeholder="val"/>
-    <button class="bb-var-btn" data-bulk-field="lineHeight" title="Bind variable to line height">⚡</button>
-    <div id="bb-var-lineHeight" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="lineHeight">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">LH</label>
+    <select id="bb-lhUnit" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>AUTO</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lhVal" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="val"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="lineHeight" title="Bind variable to line height">⚡</button>
+    <div id="bb-var-lineHeight" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="lineHeight">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>LS</label>
-    <select id="bb-lsUnit"><option value="">—</option><option>PIXELS</option><option>PERCENT</option></select>
-    <input id="bb-lsVal" type="number" step="0.1" placeholder="val"/>
-    <button class="bb-var-btn" data-bulk-field="letterSpacing" title="Bind variable to letter spacing">⚡</button>
-    <div id="bb-var-letterSpacing" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="letterSpacing">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">LS</label>
+    <select id="bb-lsUnit" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lsVal" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" step="0.1" placeholder="val"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="letterSpacing" title="Bind variable to letter spacing">⚡</button>
+    <div id="bb-var-letterSpacing" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="letterSpacing">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group"><label>Case</label>
-    <select id="bb-case">
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Case</label>
+    <select id="bb-case" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui">
       <option value="">—</option><option>ORIGINAL</option><option>UPPER</option><option>LOWER</option>
       <option>TITLE</option><option>SMALL_CAPS</option><option>SMALL_CAPS_FORCED</option>
     </select>
   </div>
-  <div class="bb-group"><label>Decor</label>
-    <select id="bb-deco"><option value="">—</option><option>NONE</option><option>UNDERLINE</option><option>STRIKETHROUGH</option></select>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Decor</label>
+    <select id="bb-deco" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>NONE</option><option>UNDERLINE</option><option>STRIKETHROUGH</option></select>
   </div>
-  <div class="bb-group"><label>Lead Trim</label>
-    <select id="bb-lt"><option value="">—</option><option>NONE</option><option>CAP_HEIGHT</option></select>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Lead Trim</label>
+    <select id="bb-lt" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>NONE</option><option>CAP_HEIGHT</option></select>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>Para Sp</label>
-    <input id="bb-paraSp" type="number" min="0" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="paragraphSpacing" title="Bind variable to paragraph spacing">⚡</button>
-    <div id="bb-var-paragraphSpacing" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="paragraphSpacing">✕</button></div>
-  </div>
-
-  <div class="bb-group">
-    <label>Indent</label>
-    <input id="bb-indent" type="number" min="0" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="paragraphIndent" title="Bind variable to paragraph indent">⚡</button>
-    <div id="bb-var-paragraphIndent" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="paragraphIndent">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Para Sp</label>
+    <input id="bb-paraSp" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="paragraphSpacing" title="Bind variable to paragraph spacing">⚡</button>
+    <div id="bb-var-paragraphSpacing" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="paragraphSpacing">✕</button></div>
   </div>
 
-  <div class="bb-group">
-    <label>List Sp</label>
-    <input id="bb-listSp" type="number" min="0" step="0.5" placeholder="—"/>
-  </div>
-  <div class="bb-group"><label>Hang List</label>
-    <select id="bb-hangList"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
-  </div>
-  <div class="bb-group"><label>Hang Punct</label>
-    <select id="bb-hangPunct"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Indent</label>
+    <input id="bb-indent" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="paragraphIndent" title="Bind variable to paragraph indent">⚡</button>
+    <div id="bb-var-paragraphIndent" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="paragraphIndent">✕</button></div>
   </div>
 
-  <button id="applyBulkBtn">Apply to selected</button>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">List Sp</label>
+    <input id="bb-listSp" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+  </div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Hang List</label>
+    <select id="bb-hangList" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  </div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Hang Punct</label>
+    <select id="bb-hangPunct" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  </div>
+
+  <button id="applyBulkBtn" class="cursor-pointer rounded border border-brand-primary bg-brand-primary px-2 py-[3px] text-ui font-semibold text-ui-surface hover:bg-brand-hover">Apply to selected</button>
 </div>
 
-<div id="errorPanel"></div>
+<div id="errorPanel" class="hidden max-h-20 shrink-0 overflow-y-auto border-b border-ui-tertiary bg-ui-clear px-2.5 py-1.5 text-ui text-status-error"></div>
 
-<div id="tableWrap">
-  <table id="styleTable">
+<div id="tableWrap" class="relative flex-1 overflow-auto">
+  <table id="styleTable" class="min-w-full table-fixed border-collapse">
     <colgroup id="colgroup"></colgroup>
     <thead><tr id="headerRow"></tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
 </div>
 
-<div id="varPicker">
-  <div id="varPickerLabel"></div>
-  <input id="varPickerSearch" type="text" placeholder="Search variables…"/>
-  <div id="varPickerList"></div>
-  <div id="varPickerClear">&#x2715; Unbind variable</div>
+<div id="varPicker" class="fixed z-[1000] hidden max-h-[300px] w-[260px] flex-col rounded border border-ui-tertiary bg-ui-surface shadow-picker">
+  <div id="varPickerLabel" class="px-2.5 pt-1 text-micro font-semibold uppercase text-ui-subtle"></div>
+  <input id="varPickerSearch" class="border-0 border-b border-ui-tertiary px-2 py-1.5 text-ui outline-none" type="text" placeholder="Search variables…"/>
+  <div id="varPickerList" class="flex-1 overflow-y-auto"></div>
+  <div id="varPickerClear" class="cursor-pointer border-t border-ui-tertiary px-2.5 py-1 text-ui text-status-error hover:bg-ui-clear">&#x2715; Unbind variable</div>
 </div>
 
 <script>

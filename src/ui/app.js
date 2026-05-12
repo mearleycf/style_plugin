@@ -30,6 +30,10 @@ let nameFilter = '';
 let bulkVarBindings = {};
 let restoreAfterCanonicalReload = null;
 
+const CELL_INPUT_CLASSES = 'w-full rounded-sm border border-transparent bg-transparent px-[3px] py-px text-ui outline-none focus:border-brand-primary focus:bg-ui-surface';
+const TABLE_ROW_CLASSES = 'border-b border-ui-tertiary hover:bg-ui-hover';
+const DIRTY_ROW_CLASSES = ['bg-ui-dirty', 'hover:bg-ui-dirtyHover'];
+
 function hasBulkVarBinding(field) {
   return Object.prototype.hasOwnProperty.call(bulkVarBindings, field);
 }
@@ -51,7 +55,7 @@ function makeFontNameForFamily(family, preferredStyle) {
 
 function hideErrorPanel() {
   const ep = document.getElementById('errorPanel');
-  ep.style.display = 'none';
+  ep.classList.add('hidden');
   setChildren(ep, []);
 }
 
@@ -66,7 +70,7 @@ function renderErrorPanel(title, messages) {
     nodes.push(document.createTextNode(message));
   });
   setChildren(ep, nodes);
-  ep.style.display = 'block';
+  ep.classList.remove('hidden');
 }
 
 function requestCanonicalReload() {
@@ -85,25 +89,26 @@ function buildHeader() {
     cg.appendChild(c);
 
     const th = document.createElement('th');
-    th.style.position = 'relative';
+    th.className = 'sticky top-0 z-10 overflow-hidden whitespace-nowrap border-b-2 border-r border-ui-tertiary bg-ui-secondary px-1 py-1 text-left text-micro font-semibold select-none relative';
     if (col.key === 'check') {
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.id = 'selectAll';
+      cb.className = 'cursor-pointer';
       cb.addEventListener('change', onSelectAll);
       th.appendChild(cb);
     } else {
       const inner = document.createElement('div');
-      inner.className = 'th-inner';
+      inner.className = 'flex items-center overflow-hidden';
       const lbl = document.createElement('span');
-      lbl.className = 'th-label';
+      lbl.className = 'flex-1 overflow-hidden text-ellipsis whitespace-nowrap';
       lbl.textContent = col.label;
       inner.appendChild(lbl);
       th.appendChild(inner);
     }
     if (col.resizable) {
       const handle = document.createElement('div');
-      handle.className = 'th-resize';
+      handle.className = 'absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent';
       handle.addEventListener('mousedown', e => startResize(e, i));
       th.appendChild(handle);
     }
@@ -160,8 +165,9 @@ function refreshNameGroupList() {
 
 document.getElementById('filterName').addEventListener('input', e => {
   nameFilter = e.target.value;
-  e.target.classList.toggle('active', !!nameFilter);
-  document.getElementById('clearFilterBtn').style.display = nameFilter ? '' : 'none';
+  e.target.classList.toggle('border-brand-primary', !!nameFilter);
+  e.target.classList.toggle('bg-ui-bound', !!nameFilter);
+  document.getElementById('clearFilterBtn').classList.toggle('hidden', !nameFilter);
   renderTable();
 });
 
@@ -169,8 +175,8 @@ document.getElementById('clearFilterBtn').addEventListener('click', () => {
   nameFilter = '';
   const inp = document.getElementById('filterName');
   inp.value = '';
-  inp.classList.remove('active');
-  document.getElementById('clearFilterBtn').style.display = 'none';
+  inp.classList.remove('border-brand-primary', 'bg-ui-bound');
+  document.getElementById('clearFilterBtn').classList.add('hidden');
   renderTable();
 });
 
@@ -201,7 +207,11 @@ function getEditedValue(id, field) {
 }
 function markDirty(id) {
   const row = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
-  if (row) { row.classList.add('dirty'); updateStateDot(row, id); }
+  if (row) {
+    row.classList.add('dirty');
+    row.classList.add(...DIRTY_ROW_CLASSES);
+    updateStateDot(row, id);
+  }
   updateToolbar();
 }
 function isDirty(id) {
@@ -216,12 +226,12 @@ function updateStateDot(row, id) {
   const status = applyStatus.get(id);
   if (status) {
     const dot = document.createElement('span');
-    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full ' + (status.ok ? 'bg-status-ok' : 'bg-status-error');
     dot.title = status.error || 'OK';
     cell.appendChild(dot);
   } else if (isDirty(id)) {
     const dot = document.createElement('span');
-    dot.className = 'dot dot-pending';
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full bg-status-pending';
     dot.title = 'Unsaved changes';
     cell.appendChild(dot);
   }
@@ -376,9 +386,9 @@ function requestResize() {
     const theadH = (document.querySelector('thead') || {offsetHeight:32}).offsetHeight || 32;
     const toolbarH = document.getElementById('toolbar').offsetHeight;
     const bulkBar  = document.getElementById('bulkBar');
-    const bulkH    = bulkBar.style.display !== 'none' ? bulkBar.offsetHeight : 0;
+    const bulkH    = !bulkBar.classList.contains('hidden') ? bulkBar.offsetHeight : 0;
     const ep       = document.getElementById('errorPanel');
-    const epH      = ep.style.display !== 'none' ? ep.offsetHeight : 0;
+    const epH      = !ep.classList.contains('hidden') ? ep.offsetHeight : 0;
     const totalH = Math.min(800, Math.max(300, toolbarH + bulkH + epH + theadH + rows.length * rowH + 8));
     const totalW = Math.max(800, colWidths.reduce((a,b) => a+b, 0) + 20);
     parent.postMessage({ pluginMessage: { type: 'resize', width: totalW, height: totalH } }, '*');

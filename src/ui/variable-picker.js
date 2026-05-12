@@ -11,10 +11,10 @@ function openVarPicker(id, field, anchorEl, isBulk) {
   if (!isBindableVarField(field)) return;
   vpState = { id, field, bulk: !!isBulk };
   const picker = document.getElementById('varPicker');
-  picker.classList.add('open');
+  picker.classList.remove('hidden');
+  picker.classList.add('flex');
   document.getElementById('varPickerLabel').textContent = field.replace(/([A-Z])/g, ' $1').toLowerCase();
   document.getElementById('varPickerSearch').value = '';
-  document.getElementById('varPickerClear').style.display = '';
   renderVarPickerList('');
   const rect = anchorEl.getBoundingClientRect();
   let top = rect.bottom + 2, left = rect.left;
@@ -25,7 +25,9 @@ function openVarPicker(id, field, anchorEl, isBulk) {
   document.getElementById('varPickerSearch').focus();
 }
 function closeVarPicker() {
-  document.getElementById('varPicker').classList.remove('open');
+  const picker = document.getElementById('varPicker');
+  picker.classList.add('hidden');
+  picker.classList.remove('flex');
   vpState = null;
 }
 function renderVarPickerList(query) {
@@ -37,7 +39,7 @@ function renderVarPickerList(query) {
   );
   if (!filtered.length) {
     const d = document.createElement('div');
-    d.className = 'vp-none';
+    d.className = 'px-2.5 py-1.5 text-ui italic text-ui-subtle';
     d.textContent = variableList.length ? 'No matches' : 'No FLOAT variables found';
     list.appendChild(d);
     return;
@@ -47,9 +49,9 @@ function renderVarPickerList(query) {
   ) : null;
   filtered.forEach(v => {
     const item = document.createElement('div');
-    item.className = 'vp-item' + (v.id === currentId ? ' selected' : '');
-    const nm = document.createElement('span'); nm.className = 'vp-name'; nm.textContent = v.name;
-    const col = document.createElement('span'); col.className = 'vp-coll'; col.textContent = v.collectionName;
+    item.className = 'flex cursor-pointer flex-col gap-px px-2.5 py-[5px] text-ui hover:bg-ui-hover' + (v.id === currentId ? ' bg-ui-bound' : '');
+    const nm = document.createElement('span'); nm.className = 'font-medium'; nm.textContent = v.name;
+    const col = document.createElement('span'); col.className = 'text-micro text-ui-subtle'; col.textContent = v.collectionName;
     item.appendChild(nm); item.appendChild(col);
     item.addEventListener('click', () => {
       if (vpState) {

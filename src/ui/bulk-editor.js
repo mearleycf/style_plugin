@@ -2,8 +2,14 @@
 function updateBulkBar() {
   const sel = selectedIds();
   const bar = document.getElementById('bulkBar');
-  if (sel.length < 2) { bar.style.display = 'none'; updateToolbar(); return; }
-  bar.style.display = 'flex';
+  if (sel.length < 2) {
+    bar.classList.add('hidden');
+    bar.classList.remove('flex');
+    updateToolbar();
+    return;
+  }
+  bar.classList.remove('hidden');
+  bar.classList.add('flex');
 
   const families = [...new Set(sel.map(id => {
     const e = edits.get(id);
@@ -60,9 +66,11 @@ function updateBulkVarChip(field) {
     const varId = bulkVarBindings[field];
     const info = variableMap.get(varId);
     chip.querySelector('span').textContent = varId === null ? 'Unbind variable' : (info ? info.name : varId);
-    chip.style.display = 'flex';
+    chip.classList.remove('hidden');
+    chip.classList.add('flex');
   } else {
-    chip.style.display = 'none';
+    chip.classList.add('hidden');
+    chip.classList.remove('flex');
   }
 }
 

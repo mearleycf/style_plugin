@@ -5,115 +5,115 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Bulk Typography Style Editor</title>
 <style>
-:root{--color-primary:#0d99ff;--color-primary-hover:#004c84;--color-primary-active:#95d2ff;--color-background-primary:#fbfdff;--color-background-secondary:#e8e8e8;--color-background-tertiary:#ccc;--color-background-quaternary:#fff;--color-alert-ok:#4caf50;--color-alert-err:#f44336;--color-alert-pending:#ff9800}*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;font-size:11px;background:var(--color-background-primary);color:var(--color-text-primary);overflow:hidden;height:100vh;display:flex;flex-direction:column}#toolbar{display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--color-background-secondary);border-bottom:1px solid var(--color-background-tertiary);flex-shrink:0;flex-wrap:wrap}#toolbar button{padding:3px 8px;font-size:11px;border:1px solid var(--color-background-tertiary);border-radius:3px;background:var(--color-background-quaternary);cursor:pointer}#toolbar button:hover{background:var(--color-background-tertiary)}#toolbar button:disabled{opacity:.45;cursor:default}#applyBtn{background:var(--color-primary);color:var(--color-background-quaternary);border-color:var(--color-primary);font-weight:600}#applyBtn:hover:not(:disabled){background:var(--color-primary-hover)}#selInfo{font-size:11px;color:var(--color-text-secondary)}#filterWrap{display:flex;align-items:center;gap:4px;flex:1;min-width:160px;max-width:340px}#filterName{flex:1;font-size:11px;border:1px solid var(--color-background-tertiary);border-radius:3px;padding:3px 6px;outline:none}#filterName.active,#filterName:focus{border-color:var(--color-primary)}#filterName.active{background:var(--color-background-tertiary)}#clearFilterBtn{font-size:10px;padding:2px 6px;display:none}.toolbar-spacer{flex:1}#bulkBar,.is-hidden{display:none}#bulkBar{align-items:center;gap:6px;padding:4px 8px;background:var(--color-background-tertiary);border-bottom:1px solid var(--color-background-quaternary);flex-shrink:0;flex-wrap:wrap}#bulkBar label{font-size:11px;color:var(--color-text-secondary);white-space:nowrap}#bulkBar input[type=number],#bulkBar select{font-size:11px;border:1px solid var(--color-background-tertiary);border-radius:3px;padding:2px 4px;width:76px}#bulkBar .bb-group{display:flex;align-items:center;gap:3px}#bulkBar .bb-sep{width:1px;height:18px;background:var(--color-background-tertiary);margin:0 2px}.bulk-title{font-size:11px;margin-right:4px}.bulk-family-input{width:100px}#applyBulkBtn{padding:3px 8px;font-size:11px;border:1px solid var(--color-primary);border-radius:3px;background:var(--color-primary);color:var(--color-background-quaternary);cursor:pointer;font-weight:600}.bb-var-chip{display:flex;align-items:center;gap:2px;background:var(--color-background-tertiary);border:1px solid var(--color-primary);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--color-primary);max-width:120px}.bb-var-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.bb-var-chip button{border:none;background:none;color:var(--color-primary);line-height:1}.bb-var-btn,.bb-var-chip button{cursor:pointer;padding:0;font-size:10px;flex-shrink:0}.bb-var-btn{width:18px;height:18px;border:1px solid var(--color-background-tertiary);border-radius:3px;background:var(--color-background-quaternary);color:var(--color-text-secondary);line-height:16px;text-align:center}.bb-var-btn:hover{border-color:var(--color-primary);color:var(--color-primary)}#errorPanel,.bb-var-btn:hover{background:var(--color-background-tertiary)}#errorPanel{display:none;padding:6px 10px;border-bottom:1px solid var(--color-background-quaternary);font-size:11px;color:var(--color-text-secondary);flex-shrink:0;max-height:80px;overflow-y:auto}#tableWrap{flex:1;overflow:auto;position:relative}table{border-collapse:collapse;table-layout:fixed;min-width:100%}thead th{position:sticky;top:0;z-index:10;background:var(--color-background-secondary);border-bottom:2px solid var(--color-background-tertiary);border-right:1px solid var(--color-background-tertiary);padding:4px;font-size:10px;font-weight:600;text-align:left;white-space:nowrap;overflow:hidden;-webkit-user-select:none;-moz-user-select:none;user-select:none}thead th .th-inner{display:flex;align-items:center;overflow:hidden}thead th .th-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}thead th .th-resize{width:4px;height:100%;position:absolute;right:0;top:0;cursor:col-resize;background:transparent}tbody tr{border-bottom:1px solid var(--color-background-tertiary)}tbody tr.dirty,tbody tr.dirty:hover,tbody tr:hover{background:var(--color-background-tertiary)}td{border-right:1px solid var(--color-background-tertiary);padding:2px 3px;vertical-align:middle;overflow:hidden}td input[type=number],td input[type=text],td select{width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;padding:1px 3px;background:transparent;outline:none}td input[type=number]:focus,td input[type=text]:focus,td select:focus{border-color:var(--color-primary);background:var(--color-background-quaternary)}td input[type=checkbox]{cursor:pointer}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}.dot-ok{background:var(--color-alert-ok)}.dot-err{background:var(--color-alert-err)}.dot-pending{background:var(--color-alert-pending)}.state-cell{text-align:center;padding:2px}.vb-wrap{display:flex;align-items:center;gap:2px;width:100%}.vb-wrap input{flex:1;min-width:0}.vb-btn{flex-shrink:0;width:16px;height:16px;border:1px solid var(--color-background-tertiary);border-radius:2px;background:var(--color-background-quaternary);cursor:pointer;font-size:9px;line-height:14px;text-align:center;color:var(--color-text-secondary);padding:0}.vb-bound .vb-btn,.vb-btn:hover{background:var(--color-background-tertiary);border-color:var(--color-primary);color:var(--color-primary)}.vb-bound input{color:var(--color-primary);font-style:italic}.uv-wrap{display:flex;align-items:center;gap:2px;width:100%}.uv-wrap select.unit-sel{width:52px;flex-shrink:0;font-size:10px}.uv-wrap input{flex:1;min-width:0}#varPicker{display:none;position:fixed;z-index:1000;background:var(--color-background-quaternary);border:1px solid var(--color-background-tertiary);border-radius:4px;box-shadow:0 4px 16px rgba(0,0,0,.18);width:260px;max-height:300px;flex-direction:column}#varPicker.open{display:flex}#varPickerLabel{padding:4px 10px 0;font-size:10px;color:var(--color-text-secondary);font-weight:600;text-transform:uppercase}#varPickerSearch{padding:6px 8px;border:none;border-bottom:1px solid var(--color-background-tertiary);font-size:11px;outline:none}#varPickerList{flex:1;overflow-y:auto}.vp-item{padding:5px 10px;cursor:pointer;font-size:11px;display:flex;flex-direction:column;gap:1px}.vp-item.selected,.vp-item:hover{background:var(--color-background-tertiary)}.vp-name{font-weight:500}.vp-coll{font-size:10px}.vp-coll,.vp-none{color:var(--color-text-secondary)}.vp-none{padding:6px 10px;font-size:11px;font-style:italic}#varPickerClear{padding:5px 10px;border-top:1px solid var(--color-background-tertiary);font-size:11px;color:var(--color-alert-err);cursor:pointer}#varPickerClear:hover{background:var(--color-background-tertiary)}.relative{position:relative}.block{display:block}.flex{display:flex}.table{display:table}.resize{resize:both}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}
+.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.sticky{position:sticky}.right-0{right:0}.top-0{top:0}.z-10{z-index:10}.z-\[1000\]{z-index:1000}.m-0{margin:0}.mx-0\.5{margin-left:.125rem;margin-right:.125rem}.mr-1{margin-right:.25rem}.box-border{box-sizing:border-box}.inline-block{display:inline-block}.flex{display:flex}.table{display:table}.hidden{display:none}.h-2{height:.5rem}.h-4{height:1rem}.h-\[18px\]{height:18px}.h-full{height:100%}.h-screen{height:100vh}.max-h-20{max-height:5rem}.max-h-\[300px\]{max-height:300px}.w-1{width:.25rem}.w-2{width:.5rem}.w-4{width:1rem}.w-\[100px\]{width:100px}.w-\[18px\]{width:18px}.w-\[260px\]{width:260px}.w-\[52px\]{width:52px}.w-\[76px\]{width:76px}.w-full{width:100%}.w-px{width:1px}.min-w-0{min-width:0}.min-w-40{min-width:10rem}.min-w-full{min-width:100%}.max-w-\[120px\]{max-width:120px}.max-w-\[340px\]{max-width:340px}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.table-fixed{table-layout:fixed}.border-collapse{border-collapse:collapse}.cursor-col-resize{cursor:col-resize}.cursor-pointer{cursor:pointer}.select-none{-webkit-user-select:none;-moz-user-select:none;user-select:none}.resize{resize:both}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-center{align-items:center}.gap-0\.5{gap:.125rem}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-\[3px\]{gap:3px}.gap-px{gap:1px}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-y-auto{overflow-y:auto}.text-ellipsis{text-overflow:ellipsis}.whitespace-nowrap{white-space:nowrap}.rounded{border-radius:.25rem}.rounded-\[10px\]{border-radius:10px}.rounded-full{border-radius:9999px}.rounded-sm{border-radius:.125rem}.border{border-width:1px}.border-0{border-width:0}.border-b{border-bottom-width:1px}.border-b-2{border-bottom-width:2px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-brand-primary{--tw-border-opacity:1;border-color:rgb(13 153 255/var(--tw-border-opacity,1))}.border-transparent{border-color:transparent}.border-ui-surface{--tw-border-opacity:1;border-color:rgb(255 255 255/var(--tw-border-opacity,1))}.border-ui-tertiary{--tw-border-opacity:1;border-color:rgb(204 204 204/var(--tw-border-opacity,1))}.bg-brand-primary{--tw-bg-opacity:1;background-color:rgb(13 153 255/var(--tw-bg-opacity,1))}.bg-status-error{--tw-bg-opacity:1;background-color:rgb(244 67 54/var(--tw-bg-opacity,1))}.bg-status-ok{--tw-bg-opacity:1;background-color:rgb(76 175 80/var(--tw-bg-opacity,1))}.bg-status-pending{--tw-bg-opacity:1;background-color:rgb(255 152 0/var(--tw-bg-opacity,1))}.bg-transparent{background-color:transparent}.bg-ui-bound{--tw-bg-opacity:1;background-color:rgb(227 242 253/var(--tw-bg-opacity,1))}.bg-ui-clear{--tw-bg-opacity:1;background-color:rgb(255 243 243/var(--tw-bg-opacity,1))}.bg-ui-dirty{--tw-bg-opacity:1;background-color:rgb(255 248 225/var(--tw-bg-opacity,1))}.bg-ui-primary{--tw-bg-opacity:1;background-color:rgb(251 253 255/var(--tw-bg-opacity,1))}.bg-ui-secondary{--tw-bg-opacity:1;background-color:rgb(232 232 232/var(--tw-bg-opacity,1))}.bg-ui-surface{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.bg-ui-tertiary{--tw-bg-opacity:1;background-color:rgb(204 204 204/var(--tw-bg-opacity,1))}.p-0{padding:0}.px-1{padding-left:.25rem;padding-right:.25rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-\[3px\]{padding-left:3px;padding-right:3px}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-\[3px\]{padding-top:3px;padding-bottom:3px}.py-\[5px\]{padding-top:5px;padding-bottom:5px}.py-px{padding-top:1px;padding-bottom:1px}.pt-1{padding-top:.25rem}.text-left{text-align:left}.text-center{text-align:center}.align-middle{vertical-align:middle}.font-ui{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}.text-\[9px\]{font-size:9px}.text-micro{font-size:10px}.text-ui{font-size:11px}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.italic{font-style:italic}.leading-4{line-height:1rem}.leading-\[14px\]{line-height:14px}.leading-none{line-height:1}.text-brand-primary{--tw-text-opacity:1;color:rgb(13 153 255/var(--tw-text-opacity,1))}.text-status-error{--tw-text-opacity:1;color:rgb(244 67 54/var(--tw-text-opacity,1))}.text-ui-muted{--tw-text-opacity:1;color:rgb(85 85 85/var(--tw-text-opacity,1))}.text-ui-subtle{--tw-text-opacity:1;color:rgb(136 136 136/var(--tw-text-opacity,1))}.text-ui-surface{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.text-ui-text{--tw-text-opacity:1;color:rgb(26 26 26/var(--tw-text-opacity,1))}.shadow-picker{--tw-shadow:0 4px 16px rgba(0,0,0,.18);--tw-shadow-colored:0 4px 16px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.hover\:border-brand-primary:hover{--tw-border-opacity:1;border-color:rgb(13 153 255/var(--tw-border-opacity,1))}.hover\:bg-brand-hover:hover{--tw-bg-opacity:1;background-color:rgb(0 76 132/var(--tw-bg-opacity,1))}.hover\:bg-ui-bound:hover{--tw-bg-opacity:1;background-color:rgb(227 242 253/var(--tw-bg-opacity,1))}.hover\:bg-ui-clear:hover{--tw-bg-opacity:1;background-color:rgb(255 243 243/var(--tw-bg-opacity,1))}.hover\:bg-ui-dirtyHover:hover{--tw-bg-opacity:1;background-color:rgb(255 243 204/var(--tw-bg-opacity,1))}.hover\:bg-ui-hover:hover{--tw-bg-opacity:1;background-color:rgb(247 249 255/var(--tw-bg-opacity,1))}.hover\:bg-ui-tertiary:hover{--tw-bg-opacity:1;background-color:rgb(204 204 204/var(--tw-bg-opacity,1))}.hover\:text-brand-primary:hover{--tw-text-opacity:1;color:rgb(13 153 255/var(--tw-text-opacity,1))}.focus\:border-brand-primary:focus{--tw-border-opacity:1;border-color:rgb(13 153 255/var(--tw-border-opacity,1))}.focus\:bg-ui-surface:focus{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1))}.disabled\:cursor-default:disabled{cursor:default}.disabled\:opacity-45:disabled{opacity:.45}.\[\&_\*\]\:m-0 *{margin:0}.\[\&_\*\]\:box-border *{box-sizing:border-box}.\[\&_\*\]\:p-0 *{padding:0}
 </style>
 </head>
-<body>
+<body class="box-border m-0 flex h-screen flex-col overflow-hidden bg-ui-primary p-0 font-ui text-ui text-ui-text [&_*]:box-border [&_*]:m-0 [&_*]:p-0">
 
-<div id="toolbar">
-  <button id="reloadBtn">&#8635; Reload</button>
-  <div id="filterWrap">
-    <input id="filterName" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
-    <button id="clearFilterBtn" title="Clear filter">&#x2715;</button>
+<div id="toolbar" class="flex shrink-0 flex-wrap items-center gap-1.5 border-b border-ui-tertiary bg-ui-secondary px-2 py-1.5">
+  <button id="reloadBtn" class="cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-2 py-[3px] text-ui hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45">&#8635; Reload</button>
+  <div id="filterWrap" class="flex min-w-40 max-w-[340px] flex-1 items-center gap-1">
+    <input id="filterName" class="flex-1 rounded border border-ui-tertiary px-1.5 py-[3px] text-ui outline-none focus:border-brand-primary" type="text" placeholder="Filter by name…" list="nameGroupList" autocomplete="off"/>
+    <button id="clearFilterBtn" class="hidden cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-1.5 py-0.5 text-micro hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45" title="Clear filter">&#x2715;</button>
   </div>
-  <span id="selInfo">Loading…</span>
-  <div class="toolbar-spacer"></div>
-  <button id="clearBtn" disabled>Clear edits</button>
-  <button id="applyBtn" disabled>Apply changes</button>
+  <span id="selInfo" class="text-ui text-ui-muted">Loading…</span>
+  <div class="flex-1"></div>
+  <button id="clearBtn" class="cursor-pointer rounded border border-ui-tertiary bg-ui-surface px-2 py-[3px] text-ui hover:bg-ui-tertiary disabled:cursor-default disabled:opacity-45" disabled>Clear edits</button>
+  <button id="applyBtn" class="cursor-pointer rounded border border-brand-primary bg-brand-primary px-2 py-[3px] text-ui font-semibold text-ui-surface hover:bg-brand-hover disabled:cursor-default disabled:opacity-45" disabled>Apply changes</button>
 </div>
 
 <datalist id="nameGroupList"></datalist>
 
-<div id="bulkBar">
-  <strong class="bulk-title">Bulk edit selected:</strong>
+<div id="bulkBar" class="hidden shrink-0 flex-wrap items-center gap-1.5 border-b border-ui-surface bg-ui-dirty px-2 py-1 text-ui">
+  <strong class="mr-1 text-ui">Bulk edit selected:</strong>
 
-  <div class="bb-group"><label>Family</label><input id="bb-family" class="bulk-family-input" type="text" placeholder="Family…"/></div>
-  <div class="bb-group"><label>Style</label><select id="bb-style"><option value="">—</option></select></div>
-  <div class="bb-sep"></div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Family</label><input id="bb-family" class="w-[100px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="text" placeholder="Family…"/></div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Style</label><select id="bb-style" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option></select></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>Size</label>
-    <input id="bb-size" type="number" min="1" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="fontSize" title="Bind variable to font size">⚡</button>
-    <div id="bb-var-fontSize" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="fontSize">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Size</label>
+    <input id="bb-size" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="1" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="fontSize" title="Bind variable to font size">⚡</button>
+    <div id="bb-var-fontSize" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="fontSize">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>LH</label>
-    <select id="bb-lhUnit"><option value="">—</option><option>AUTO</option><option>PIXELS</option><option>PERCENT</option></select>
-    <input id="bb-lhVal" type="number" min="0" step="0.5" placeholder="val"/>
-    <button class="bb-var-btn" data-bulk-field="lineHeight" title="Bind variable to line height">⚡</button>
-    <div id="bb-var-lineHeight" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="lineHeight">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">LH</label>
+    <select id="bb-lhUnit" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>AUTO</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lhVal" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="val"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="lineHeight" title="Bind variable to line height">⚡</button>
+    <div id="bb-var-lineHeight" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="lineHeight">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>LS</label>
-    <select id="bb-lsUnit"><option value="">—</option><option>PIXELS</option><option>PERCENT</option></select>
-    <input id="bb-lsVal" type="number" step="0.1" placeholder="val"/>
-    <button class="bb-var-btn" data-bulk-field="letterSpacing" title="Bind variable to letter spacing">⚡</button>
-    <div id="bb-var-letterSpacing" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="letterSpacing">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">LS</label>
+    <select id="bb-lsUnit" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>PIXELS</option><option>PERCENT</option></select>
+    <input id="bb-lsVal" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" step="0.1" placeholder="val"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="letterSpacing" title="Bind variable to letter spacing">⚡</button>
+    <div id="bb-var-letterSpacing" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="letterSpacing">✕</button></div>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group"><label>Case</label>
-    <select id="bb-case">
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Case</label>
+    <select id="bb-case" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui">
       <option value="">—</option><option>ORIGINAL</option><option>UPPER</option><option>LOWER</option>
       <option>TITLE</option><option>SMALL_CAPS</option><option>SMALL_CAPS_FORCED</option>
     </select>
   </div>
-  <div class="bb-group"><label>Decor</label>
-    <select id="bb-deco"><option value="">—</option><option>NONE</option><option>UNDERLINE</option><option>STRIKETHROUGH</option></select>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Decor</label>
+    <select id="bb-deco" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>NONE</option><option>UNDERLINE</option><option>STRIKETHROUGH</option></select>
   </div>
-  <div class="bb-group"><label>Lead Trim</label>
-    <select id="bb-lt"><option value="">—</option><option>NONE</option><option>CAP_HEIGHT</option></select>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Lead Trim</label>
+    <select id="bb-lt" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option>NONE</option><option>CAP_HEIGHT</option></select>
   </div>
-  <div class="bb-sep"></div>
+  <div class="h-[18px] w-px bg-ui-tertiary mx-0.5"></div>
 
-  <div class="bb-group">
-    <label>Para Sp</label>
-    <input id="bb-paraSp" type="number" min="0" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="paragraphSpacing" title="Bind variable to paragraph spacing">⚡</button>
-    <div id="bb-var-paragraphSpacing" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="paragraphSpacing">✕</button></div>
-  </div>
-
-  <div class="bb-group">
-    <label>Indent</label>
-    <input id="bb-indent" type="number" min="0" step="0.5" placeholder="—"/>
-    <button class="bb-var-btn" data-bulk-field="paragraphIndent" title="Bind variable to paragraph indent">⚡</button>
-    <div id="bb-var-paragraphIndent" class="bb-var-chip is-hidden"><span></span><button data-clear-bulk="paragraphIndent">✕</button></div>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Para Sp</label>
+    <input id="bb-paraSp" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="paragraphSpacing" title="Bind variable to paragraph spacing">⚡</button>
+    <div id="bb-var-paragraphSpacing" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="paragraphSpacing">✕</button></div>
   </div>
 
-  <div class="bb-group">
-    <label>List Sp</label>
-    <input id="bb-listSp" type="number" min="0" step="0.5" placeholder="—"/>
-  </div>
-  <div class="bb-group"><label>Hang List</label>
-    <select id="bb-hangList"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
-  </div>
-  <div class="bb-group"><label>Hang Punct</label>
-    <select id="bb-hangPunct"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">Indent</label>
+    <input id="bb-indent" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+    <button class="bb-var-btn h-[18px] w-[18px] shrink-0 cursor-pointer rounded border border-ui-tertiary bg-ui-surface p-0 text-center text-micro leading-4 text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary" data-bulk-field="paragraphIndent" title="Bind variable to paragraph indent">⚡</button>
+    <div id="bb-var-paragraphIndent" class="hidden max-w-[120px] items-center gap-0.5 rounded-[10px] border border-brand-primary bg-ui-bound px-1.5 py-px text-micro text-brand-primary"><span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap"></span><button class="shrink-0 cursor-pointer border-0 bg-transparent p-0 text-micro leading-none text-brand-primary" data-clear-bulk="paragraphIndent">✕</button></div>
   </div>
 
-  <button id="applyBulkBtn">Apply to selected</button>
+  <div class="bb-group flex items-center gap-[3px]">
+    <label class="whitespace-nowrap text-ui text-ui-muted">List Sp</label>
+    <input id="bb-listSp" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui" type="number" min="0" step="0.5" placeholder="—"/>
+  </div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Hang List</label>
+    <select id="bb-hangList" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  </div>
+  <div class="bb-group flex items-center gap-[3px]"><label class="whitespace-nowrap text-ui text-ui-muted">Hang Punct</label>
+    <select id="bb-hangPunct" class="w-[76px] rounded border border-ui-tertiary px-1 py-0.5 text-ui"><option value="">—</option><option value="true">On</option><option value="false">Off</option></select>
+  </div>
+
+  <button id="applyBulkBtn" class="cursor-pointer rounded border border-brand-primary bg-brand-primary px-2 py-[3px] text-ui font-semibold text-ui-surface hover:bg-brand-hover">Apply to selected</button>
 </div>
 
-<div id="errorPanel"></div>
+<div id="errorPanel" class="hidden max-h-20 shrink-0 overflow-y-auto border-b border-ui-tertiary bg-ui-clear px-2.5 py-1.5 text-ui text-status-error"></div>
 
-<div id="tableWrap">
-  <table id="styleTable">
+<div id="tableWrap" class="relative flex-1 overflow-auto">
+  <table id="styleTable" class="min-w-full table-fixed border-collapse">
     <colgroup id="colgroup"></colgroup>
     <thead><tr id="headerRow"></tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
 </div>
 
-<div id="varPicker">
-  <div id="varPickerLabel"></div>
-  <input id="varPickerSearch" type="text" placeholder="Search variables…"/>
-  <div id="varPickerList"></div>
-  <div id="varPickerClear">&#x2715; Unbind variable</div>
+<div id="varPicker" class="fixed z-[1000] hidden max-h-[300px] w-[260px] flex-col rounded border border-ui-tertiary bg-ui-surface shadow-picker">
+  <div id="varPickerLabel" class="px-2.5 pt-1 text-micro font-semibold uppercase text-ui-subtle"></div>
+  <input id="varPickerSearch" class="border-0 border-b border-ui-tertiary px-2 py-1.5 text-ui outline-none" type="text" placeholder="Search variables…"/>
+  <div id="varPickerList" class="flex-1 overflow-y-auto"></div>
+  <div id="varPickerClear" class="cursor-pointer border-t border-ui-tertiary px-2.5 py-1 text-ui text-status-error hover:bg-ui-clear">&#x2715; Unbind variable</div>
 </div>
 
 <script>
@@ -273,6 +273,10 @@ let nameFilter = '';
 let bulkVarBindings = {};
 let restoreAfterCanonicalReload = null;
 
+const CELL_INPUT_CLASSES = 'w-full rounded-sm border border-transparent bg-transparent px-[3px] py-px text-ui outline-none focus:border-brand-primary focus:bg-ui-surface';
+const TABLE_ROW_CLASSES = 'border-b border-ui-tertiary hover:bg-ui-hover';
+const DIRTY_ROW_CLASSES = ['bg-ui-dirty', 'hover:bg-ui-dirtyHover'];
+
 function hasBulkVarBinding(field) {
   return Object.prototype.hasOwnProperty.call(bulkVarBindings, field);
 }
@@ -294,7 +298,7 @@ function makeFontNameForFamily(family, preferredStyle) {
 
 function hideErrorPanel() {
   const ep = document.getElementById('errorPanel');
-  ep.style.display = 'none';
+  ep.classList.add('hidden');
   setChildren(ep, []);
 }
 
@@ -309,7 +313,7 @@ function renderErrorPanel(title, messages) {
     nodes.push(document.createTextNode(message));
   });
   setChildren(ep, nodes);
-  ep.style.display = 'block';
+  ep.classList.remove('hidden');
 }
 
 function requestCanonicalReload() {
@@ -328,25 +332,26 @@ function buildHeader() {
     cg.appendChild(c);
 
     const th = document.createElement('th');
-    th.style.position = 'relative';
+    th.className = 'sticky top-0 z-10 overflow-hidden whitespace-nowrap border-b-2 border-r border-ui-tertiary bg-ui-secondary px-1 py-1 text-left text-micro font-semibold select-none relative';
     if (col.key === 'check') {
       const cb = document.createElement('input');
       cb.type = 'checkbox';
       cb.id = 'selectAll';
+      cb.className = 'cursor-pointer';
       cb.addEventListener('change', onSelectAll);
       th.appendChild(cb);
     } else {
       const inner = document.createElement('div');
-      inner.className = 'th-inner';
+      inner.className = 'flex items-center overflow-hidden';
       const lbl = document.createElement('span');
-      lbl.className = 'th-label';
+      lbl.className = 'flex-1 overflow-hidden text-ellipsis whitespace-nowrap';
       lbl.textContent = col.label;
       inner.appendChild(lbl);
       th.appendChild(inner);
     }
     if (col.resizable) {
       const handle = document.createElement('div');
-      handle.className = 'th-resize';
+      handle.className = 'absolute right-0 top-0 h-full w-1 cursor-col-resize bg-transparent';
       handle.addEventListener('mousedown', e => startResize(e, i));
       th.appendChild(handle);
     }
@@ -403,8 +408,9 @@ function refreshNameGroupList() {
 
 document.getElementById('filterName').addEventListener('input', e => {
   nameFilter = e.target.value;
-  e.target.classList.toggle('active', !!nameFilter);
-  document.getElementById('clearFilterBtn').style.display = nameFilter ? '' : 'none';
+  e.target.classList.toggle('border-brand-primary', !!nameFilter);
+  e.target.classList.toggle('bg-ui-bound', !!nameFilter);
+  document.getElementById('clearFilterBtn').classList.toggle('hidden', !nameFilter);
   renderTable();
 });
 
@@ -412,8 +418,8 @@ document.getElementById('clearFilterBtn').addEventListener('click', () => {
   nameFilter = '';
   const inp = document.getElementById('filterName');
   inp.value = '';
-  inp.classList.remove('active');
-  document.getElementById('clearFilterBtn').style.display = 'none';
+  inp.classList.remove('border-brand-primary', 'bg-ui-bound');
+  document.getElementById('clearFilterBtn').classList.add('hidden');
   renderTable();
 });
 
@@ -444,7 +450,11 @@ function getEditedValue(id, field) {
 }
 function markDirty(id) {
   const row = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
-  if (row) { row.classList.add('dirty'); updateStateDot(row, id); }
+  if (row) {
+    row.classList.add('dirty');
+    row.classList.add(...DIRTY_ROW_CLASSES);
+    updateStateDot(row, id);
+  }
   updateToolbar();
 }
 function isDirty(id) {
@@ -459,12 +469,12 @@ function updateStateDot(row, id) {
   const status = applyStatus.get(id);
   if (status) {
     const dot = document.createElement('span');
-    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full ' + (status.ok ? 'bg-status-ok' : 'bg-status-error');
     dot.title = status.error || 'OK';
     cell.appendChild(dot);
   } else if (isDirty(id)) {
     const dot = document.createElement('span');
-    dot.className = 'dot dot-pending';
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full bg-status-pending';
     dot.title = 'Unsaved changes';
     cell.appendChild(dot);
   }
@@ -619,9 +629,9 @@ function requestResize() {
     const theadH = (document.querySelector('thead') || {offsetHeight:32}).offsetHeight || 32;
     const toolbarH = document.getElementById('toolbar').offsetHeight;
     const bulkBar  = document.getElementById('bulkBar');
-    const bulkH    = bulkBar.style.display !== 'none' ? bulkBar.offsetHeight : 0;
+    const bulkH    = !bulkBar.classList.contains('hidden') ? bulkBar.offsetHeight : 0;
     const ep       = document.getElementById('errorPanel');
-    const epH      = ep.style.display !== 'none' ? ep.offsetHeight : 0;
+    const epH      = !ep.classList.contains('hidden') ? ep.offsetHeight : 0;
     const totalH = Math.min(800, Math.max(300, toolbarH + bulkH + epH + theadH + rows.length * rowH + 8));
     const totalW = Math.max(800, colWidths.reduce((a,b) => a+b, 0) + 20);
     parent.postMessage({ pluginMessage: { type: 'resize', width: totalW, height: totalH } }, '*');
@@ -632,8 +642,14 @@ function requestResize() {
 function updateBulkBar() {
   const sel = selectedIds();
   const bar = document.getElementById('bulkBar');
-  if (sel.length < 2) { bar.style.display = 'none'; updateToolbar(); return; }
-  bar.style.display = 'flex';
+  if (sel.length < 2) {
+    bar.classList.add('hidden');
+    bar.classList.remove('flex');
+    updateToolbar();
+    return;
+  }
+  bar.classList.remove('hidden');
+  bar.classList.add('flex');
 
   const families = [...new Set(sel.map(id => {
     const e = edits.get(id);
@@ -690,9 +706,11 @@ function updateBulkVarChip(field) {
     const varId = bulkVarBindings[field];
     const info = variableMap.get(varId);
     chip.querySelector('span').textContent = varId === null ? 'Unbind variable' : (info ? info.name : varId);
-    chip.style.display = 'flex';
+    chip.classList.remove('hidden');
+    chip.classList.add('flex');
   } else {
-    chip.style.display = 'none';
+    chip.classList.add('hidden');
+    chip.classList.remove('flex');
   }
 }
 
@@ -765,10 +783,10 @@ function openVarPicker(id, field, anchorEl, isBulk) {
   if (!isBindableVarField(field)) return;
   vpState = { id, field, bulk: !!isBulk };
   const picker = document.getElementById('varPicker');
-  picker.classList.add('open');
+  picker.classList.remove('hidden');
+  picker.classList.add('flex');
   document.getElementById('varPickerLabel').textContent = field.replace(/([A-Z])/g, ' $1').toLowerCase();
   document.getElementById('varPickerSearch').value = '';
-  document.getElementById('varPickerClear').style.display = '';
   renderVarPickerList('');
   const rect = anchorEl.getBoundingClientRect();
   let top = rect.bottom + 2, left = rect.left;
@@ -779,7 +797,9 @@ function openVarPicker(id, field, anchorEl, isBulk) {
   document.getElementById('varPickerSearch').focus();
 }
 function closeVarPicker() {
-  document.getElementById('varPicker').classList.remove('open');
+  const picker = document.getElementById('varPicker');
+  picker.classList.add('hidden');
+  picker.classList.remove('flex');
   vpState = null;
 }
 function renderVarPickerList(query) {
@@ -791,7 +811,7 @@ function renderVarPickerList(query) {
   );
   if (!filtered.length) {
     const d = document.createElement('div');
-    d.className = 'vp-none';
+    d.className = 'px-2.5 py-1.5 text-ui italic text-ui-subtle';
     d.textContent = variableList.length ? 'No matches' : 'No FLOAT variables found';
     list.appendChild(d);
     return;
@@ -801,9 +821,9 @@ function renderVarPickerList(query) {
   ) : null;
   filtered.forEach(v => {
     const item = document.createElement('div');
-    item.className = 'vp-item' + (v.id === currentId ? ' selected' : '');
-    const nm = document.createElement('span'); nm.className = 'vp-name'; nm.textContent = v.name;
-    const col = document.createElement('span'); col.className = 'vp-coll'; col.textContent = v.collectionName;
+    item.className = 'flex cursor-pointer flex-col gap-px px-2.5 py-[5px] text-ui hover:bg-ui-hover' + (v.id === currentId ? ' bg-ui-bound' : '');
+    const nm = document.createElement('span'); nm.className = 'font-medium'; nm.textContent = v.name;
+    const col = document.createElement('span'); col.className = 'text-micro text-ui-subtle'; col.textContent = v.collectionName;
     item.appendChild(nm); item.appendChild(col);
     item.addEventListener('click', () => {
       if (vpState) {
@@ -837,9 +857,10 @@ document.getElementById('varPickerClear').addEventListener('click', () => {
 // ─── cell builders ─────────────────────────────────────────────────────────────────────────────
 function makeVbCell(id, field, numericValue, isBound) {
   const wrap = document.createElement('div');
-  wrap.className = 'vb-wrap' + (isBound ? ' vb-bound' : '');
+  wrap.className = 'vb-wrap flex w-full items-center gap-0.5' + (isBound ? ' vb-bound' : '');
   const inp = document.createElement('input');
   inp.type = isBound ? 'text' : 'number';
+  inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1' + (isBound ? ' text-brand-primary italic' : '');
   inp.step = '0.5';
   if (isBound) {
     const info = variableMap.get(getEffectiveVar(id, field));
@@ -851,7 +872,7 @@ function makeVbCell(id, field, numericValue, isBound) {
   }
   wrap.appendChild(inp);
   const btn = document.createElement('button');
-  btn.className = 'vb-btn';
+  btn.className = 'vb-btn h-4 w-4 shrink-0 cursor-pointer rounded-sm border p-0 text-center text-[9px] leading-[14px] ' + (isBound ? 'border-brand-primary bg-ui-bound text-brand-primary' : 'border-ui-tertiary bg-ui-surface text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary');
   btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
   btn.textContent = '⚡';
   btn.addEventListener('mousedown', e => e.stopPropagation());
@@ -863,6 +884,7 @@ function makeVbCell(id, field, numericValue, isBound) {
 function makeNumericCell(id, field, numericValue) {
   const inp = document.createElement('input');
   inp.type = 'number';
+  inp.className = CELL_INPUT_CLASSES;
   inp.step = '0.5';
   inp.value = numericValue;
   inp.addEventListener('change', e => {
@@ -874,19 +896,19 @@ function makeNumericCell(id, field, numericValue) {
 
 function makeUvVbCell(id, field, uvValue, isBound) {
   const wrap = document.createElement('div');
-  wrap.className = 'uv-wrap' + (isBound ? ' vb-bound' : '');
+  wrap.className = 'uv-wrap flex w-full items-center gap-0.5' + (isBound ? ' vb-bound' : '');
   if (isBound) {
     const inp = document.createElement('input');
     inp.type = 'text';
+    inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1 text-brand-primary italic';
     const info = variableMap.get(getEffectiveVar(id, field));
     inp.value = info ? info.name : '(var)';
     inp.readOnly = true;
-    inp.style.flex = '1';
     wrap.appendChild(inp);
   } else {
     const units = field === 'letterSpacing' ? ['PIXELS','PERCENT'] : ['AUTO','PIXELS','PERCENT'];
     const sel = document.createElement('select');
-    sel.className = 'unit-sel';
+    sel.className = CELL_INPUT_CLASSES + ' unit-sel w-[52px] shrink-0 text-micro';
     units.forEach(u => {
       const o = document.createElement('option');
       o.value = o.textContent = u;
@@ -907,8 +929,8 @@ function makeUvVbCell(id, field, uvValue, isBound) {
     if (uvValue.unit !== 'AUTO') {
       const inp = document.createElement('input');
       inp.type = 'number'; inp.step = '0.5';
+      inp.className = CELL_INPUT_CLASSES + ' min-w-0 flex-1';
       inp.value = uvValue.value != null ? uvValue.value : '';
-      inp.style.flex = '1'; inp.style.minWidth = '0';
       inp.addEventListener('change', e => {
         const v = parseFloat(e.target.value);
         if (!isNaN(v)) setChange(id, field, { unit: uvValue.unit, value: v });
@@ -917,7 +939,7 @@ function makeUvVbCell(id, field, uvValue, isBound) {
     }
   }
   const btn = document.createElement('button');
-  btn.className = 'vb-btn';
+  btn.className = 'vb-btn h-4 w-4 shrink-0 cursor-pointer rounded-sm border p-0 text-center text-[9px] leading-[14px] ' + (isBound ? 'border-brand-primary bg-ui-bound text-brand-primary' : 'border-ui-tertiary bg-ui-surface text-ui-muted hover:border-brand-primary hover:bg-ui-bound hover:text-brand-primary');
   btn.title = isBound ? 'Change / unbind variable' : 'Bind variable';
   btn.textContent = '⚡';
   btn.addEventListener('mousedown', e => e.stopPropagation());
@@ -928,7 +950,7 @@ function makeUvVbCell(id, field, uvValue, isBound) {
 
 function makeSelect(opts, current, onChange) {
   const sel = document.createElement('select');
-  sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+  sel.className = CELL_INPUT_CLASSES;
   opts.forEach(o => {
     const opt = document.createElement('option');
     opt.value = o;
@@ -967,33 +989,39 @@ function buildRow(viewModel) {
   const varIndent = getEffectiveVar(id, 'paragraphIndent');
 
   const tr = document.createElement('tr');
+  tr.className = TABLE_ROW_CLASSES;
   tr.dataset.id = id;
-  if (isDirty(id)) tr.classList.add('dirty');
+  if (isDirty(id)) {
+    tr.classList.add('dirty');
+    tr.classList.add(...DIRTY_ROW_CLASSES);
+  }
 
   function td(content) {
     const cell = document.createElement('td');
+    cell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
     if (content instanceof Node) cell.appendChild(content);
     else if (content !== undefined) cell.textContent = content;
     return cell;
   }
 
   const cbCell = document.createElement('td');
+  cbCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
   const rowCb = document.createElement('input');
-  rowCb.type = 'checkbox'; rowCb.className = 'row-check';
+  rowCb.type = 'checkbox'; rowCb.className = 'row-check cursor-pointer';
   rowCb.addEventListener('change', () => { updateBulkBar(); updateToolbar(); });
   cbCell.appendChild(rowCb);
   tr.appendChild(cbCell);
 
   const stateCell = document.createElement('td');
-  stateCell.className = 'state-cell';
+  stateCell.className = 'state-cell overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   if (status) {
     const dot = document.createElement('span');
-    dot.className = 'dot ' + (status.ok ? 'dot-ok' : 'dot-err');
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full ' + (status.ok ? 'bg-status-ok' : 'bg-status-error');
     dot.title = status.error || 'OK';
     stateCell.appendChild(dot);
   } else if (isDirty(id)) {
     const dot = document.createElement('span');
-    dot.className = 'dot dot-pending';
+    dot.className = 'inline-block h-2 w-2 shrink-0 rounded-full bg-status-pending';
     dot.title = 'Unsaved changes';
     stateCell.appendChild(dot);
   }
@@ -1001,11 +1029,13 @@ function buildRow(viewModel) {
 
   const nameInp = document.createElement('input');
   nameInp.type = 'text'; nameInp.value = c.name ?? viewModel.name;
+  nameInp.className = CELL_INPUT_CLASSES;
   nameInp.addEventListener('change', ev => setChange(id, 'name', ev.target.value));
   tr.appendChild(td(nameInp));
 
   const famInp = document.createElement('input');
   famInp.type = 'text'; famInp.value = fn.family;
+  famInp.className = CELL_INPUT_CLASSES;
   famInp.addEventListener('change', ev => {
     const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
     const nextFamily = ev.target.value.trim() || cur.family;
@@ -1016,10 +1046,11 @@ function buildRow(viewModel) {
   tr.appendChild(td(famInp));
 
   const styleCell = document.createElement('td');
+  styleCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 align-middle';
   const availStyles = fontMap[fn.family];
   if (availStyles && availStyles.length) {
     const sel = document.createElement('select');
-    sel.style.cssText = 'width:100%;font-size:11px;border:1px solid transparent;border-radius:2px;background:transparent;';
+    sel.className = CELL_INPUT_CLASSES;
     availStyles.forEach(st => {
       const o = document.createElement('option'); o.value = o.textContent = st;
       if (st === fn.style) o.selected = true;
@@ -1033,6 +1064,7 @@ function buildRow(viewModel) {
   } else {
     const inp = document.createElement('input');
     inp.type = 'text'; inp.value = fn.style;
+    inp.className = CELL_INPUT_CLASSES;
     inp.addEventListener('change', ev => {
       const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
       setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
@@ -1051,13 +1083,15 @@ function buildRow(viewModel) {
   tr.appendChild(td(makeSelect(['NONE','UNDERLINE','STRIKETHROUGH'], deco, v => setChange(id, 'textDecoration', v))));
   tr.appendChild(td(makeSelect(['NONE','CAP_HEIGHT'], lt, v => setChange(id, 'leadingTrim', v))));
 
-  const hangLCell = document.createElement('td'); hangLCell.style.textAlign = 'center';
+  const hangLCell = document.createElement('td'); hangLCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   const hangLCb = document.createElement('input'); hangLCb.type = 'checkbox'; hangLCb.checked = !!hangL;
+  hangLCb.className = 'cursor-pointer';
   hangLCb.addEventListener('change', ev => setChange(id, 'hangingList', ev.target.checked));
   hangLCell.appendChild(hangLCb); tr.appendChild(hangLCell);
 
-  const hangPCell = document.createElement('td'); hangPCell.style.textAlign = 'center';
+  const hangPCell = document.createElement('td'); hangPCell.className = 'overflow-hidden border-r border-ui-tertiary px-[3px] py-0.5 text-center align-middle';
   const hangPCb = document.createElement('input'); hangPCb.type = 'checkbox'; hangPCb.checked = !!hangP;
+  hangPCb.className = 'cursor-pointer';
   hangPCb.addEventListener('change', ev => setChange(id, 'hangingPunctuation', ev.target.checked));
   hangPCell.appendChild(hangPCb); tr.appendChild(hangPCell);
 
