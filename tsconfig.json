@@ -4,7 +4,8 @@
     "lib": ["ES2017"],
     "strict": true,
     "moduleResolution": "node",
+    "outFile": "code.js",
     "noEmit": false
   },
-  "include": ["code.ts"]
+  "include": ["src/backend/code.ts"]
 }

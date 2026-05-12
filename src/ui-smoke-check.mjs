@@ -27,15 +27,15 @@ const checks = [
     pass: ui.includes("function validateApplyResultsMessage"),
   },
   {
-    name: "snapshot boundVars access is guarded",
-    pass: ui.includes("getSnapshotBoundVars"),
+    name: "view model boundVars access is guarded",
+    pass: ui.includes("getViewModelBoundVars"),
   },
   {
     name: "error panel rendering avoids innerHTML",
     pass: ui.includes("function renderErrorPanel") && !ui.includes("ep.innerHTML"),
   },
   {
-    name: "successful apply reloads canonical snapshots",
+    name: "successful apply reloads canonical view models",
     pass: ui.includes("requestCanonicalReload"),
   },
   {

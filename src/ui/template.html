@@ -186,8 +186,8 @@ function hasBulkVarBinding(field) {
   return Object.prototype.hasOwnProperty.call(bulkVarBindings, field);
 }
 
-function getSnapshotBoundVars(snap) {
-  return isRecord(snap && snap.boundVars) ? snap.boundVars : {};
+function getViewModelBoundVars(viewModel) {
+  return isRecord(viewModel && viewModel.boundVars) ? viewModel.boundVars : {};
 }
 
 function getFontStyles(family) {
@@ -229,7 +229,7 @@ function requestCanonicalReload() {
   parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
 }
 
-function validateStyleSnapshot(value, index) {
+function validateTextStyleViewModel(value, index) {
   if (!isRecord(value)) throw new Error('styles[' + index + '] must be an object');
   if (typeof value.id !== 'string' || !value.id) throw new Error('styles[' + index + '].id must be a string');
   if (typeof value.name !== 'string') throw new Error('styles[' + index + '].name must be a string');
@@ -244,7 +244,7 @@ function validateStyleSnapshot(value, index) {
   if (typeof value.hangingList !== 'boolean') throw new Error('styles[' + index + '].hangingList must be a boolean');
 
   const boundVars = {};
-  const rawBoundVars = getSnapshotBoundVars(value);
+  const rawBoundVars = getViewModelBoundVars(value);
   Object.entries(rawBoundVars).forEach(([field, variableId]) => {
     if (isBindableVarField(field) && typeof variableId === 'string') boundVars[field] = variableId;
   });
@@ -293,7 +293,7 @@ function validateVariableInfo(value, index) {
 function validateStylesLoadedMessage(msg) {
   if (!Array.isArray(msg.styles)) throw new Error('styles-loaded message must include a styles array');
   return {
-    styles: msg.styles.map(validateStyleSnapshot),
+    styles: msg.styles.map(validateTextStyleViewModel),
     fonts: validateFontMap(msg.fonts || {}),
     variables: Array.isArray(msg.variables) ? msg.variables.map(validateVariableInfo) : [],
   };
@@ -435,8 +435,8 @@ function getEffectiveVar(id, field) {
   if (!isBindableVarField(field)) return null;
   const e = edits.get(id);
   if (e && field in e.varBindings) return e.varBindings[field];
-  const snap = styles.find(s => s.id === id);
-  return snap ? (getSnapshotBoundVars(snap)[field] ?? null) : null;
+  const viewModel = styles.find(s => s.id === id);
+  return viewModel ? (getViewModelBoundVars(viewModel)[field] ?? null) : null;
 }
 function getEditedValue(id, field) {
   const e = edits.get(id);
@@ -591,11 +591,11 @@ document.getElementById('applyBulkBtn').addEventListener('click', () => {
   const hangPunct = document.getElementById('bb-hangPunct').value;
 
   sel.forEach(id => {
-    const snap = styles.find(s => s.id === id);
-    if (!snap) return;
+    const viewModel = styles.find(s => s.id === id);
+    if (!viewModel) return;
 
     if (family || styleSt) {
-      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
       const nextFamily = family || cur.family;
       const nextStyle = styleSt || getValidStyleForFamily(nextFamily, cur.style);
       setChange(id, 'fontName', { family: nextFamily, style: getValidStyleForFamily(nextFamily, nextStyle) });
@@ -815,24 +815,24 @@ function makeSelect(opts, current, onChange) {
 }
 
 // ─── row builder ──────────────────────────────────────────────────────────────────────────────
-function buildRow(snap) {
-  const id = snap.id;
+function buildRow(viewModel) {
+  const id = viewModel.id;
   const e = edits.get(id) || { changes:{}, varBindings:{} };
   const c = e.changes;
   const status = applyStatus.get(id);
 
-  const fn     = c.fontName         ?? snap.fontName;
-  const fs     = c.fontSize         ?? snap.fontSize;
-  const lh     = c.lineHeight       ?? snap.lineHeight;
-  const ls     = c.letterSpacing    ?? snap.letterSpacing;
-  const paraSp = c.paragraphSpacing ?? snap.paragraphSpacing;
-  const indent = c.paragraphIndent  ?? snap.paragraphIndent;
-  const listSp = c.listSpacing      ?? snap.listSpacing;
-  const tc     = c.textCase         ?? snap.textCase;
-  const deco   = c.textDecoration   ?? snap.textDecoration;
-  const lt     = c.leadingTrim      ?? snap.leadingTrim;
-  const hangL  = c.hangingList      ?? snap.hangingList;
-  const hangP  = c.hangingPunctuation ?? snap.hangingPunctuation;
+  const fn     = c.fontName         ?? viewModel.fontName;
+  const fs     = c.fontSize         ?? viewModel.fontSize;
+  const lh     = c.lineHeight       ?? viewModel.lineHeight;
+  const ls     = c.letterSpacing    ?? viewModel.letterSpacing;
+  const paraSp = c.paragraphSpacing ?? viewModel.paragraphSpacing;
+  const indent = c.paragraphIndent  ?? viewModel.paragraphIndent;
+  const listSp = c.listSpacing      ?? viewModel.listSpacing;
+  const tc     = c.textCase         ?? viewModel.textCase;
+  const deco   = c.textDecoration   ?? viewModel.textDecoration;
+  const lt     = c.leadingTrim      ?? viewModel.leadingTrim;
+  const hangL  = c.hangingList      ?? viewModel.hangingList;
+  const hangP  = c.hangingPunctuation ?? viewModel.hangingPunctuation;
 
   const varFs     = getEffectiveVar(id, 'fontSize');
   const varLh     = getEffectiveVar(id, 'lineHeight');
@@ -874,14 +874,14 @@ function buildRow(snap) {
   tr.appendChild(stateCell);
 
   const nameInp = document.createElement('input');
-  nameInp.type = 'text'; nameInp.value = c.name ?? snap.name;
+  nameInp.type = 'text'; nameInp.value = c.name ?? viewModel.name;
   nameInp.addEventListener('change', ev => setChange(id, 'name', ev.target.value));
   tr.appendChild(td(nameInp));
 
   const famInp = document.createElement('input');
   famInp.type = 'text'; famInp.value = fn.family;
   famInp.addEventListener('change', ev => {
-    const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+    const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
     const nextFamily = ev.target.value.trim() || cur.family;
     setChange(id, 'fontName', makeFontNameForFamily(nextFamily, cur.style));
     refreshRow(id);
@@ -900,7 +900,7 @@ function buildRow(snap) {
       sel.appendChild(o);
     });
     sel.addEventListener('change', ev => {
-      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
       setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
     });
     styleCell.appendChild(sel);
@@ -908,7 +908,7 @@ function buildRow(snap) {
     const inp = document.createElement('input');
     inp.type = 'text'; inp.value = fn.style;
     inp.addEventListener('change', ev => {
-      const cur = (edits.get(id) && edits.get(id).changes.fontName) || snap.fontName;
+      const cur = (edits.get(id) && edits.get(id).changes.fontName) || viewModel.fontName;
       setChange(id, 'fontName', { family: cur.family, style: ev.target.value });
     });
     styleCell.appendChild(inp);
@@ -942,18 +942,18 @@ function buildRow(snap) {
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   clearElement(tbody);
-  getFilteredStyles().forEach(snap => tbody.appendChild(buildRow(snap)));
+  getFilteredStyles().forEach(viewModel => tbody.appendChild(buildRow(viewModel)));
   updateToolbar();
   requestResize();
 }
 
 function refreshRow(id) {
-  const snap = styles.find(s => s.id === id);
-  if (!snap) return;
+  const viewModel = styles.find(s => s.id === id);
+  if (!viewModel) return;
   const existing = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
   if (!existing) return;
   const wasChecked = existing.querySelector('input.row-check') && existing.querySelector('input.row-check').checked;
-  const newRow = buildRow(snap);
+  const newRow = buildRow(viewModel);
   existing.replaceWith(newRow);
   if (wasChecked) { const cb = newRow.querySelector('input.row-check'); if (cb) cb.checked = true; }
   updateToolbar();

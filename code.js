@@ -1,26 +1,5 @@
 "use strict";
-/// <reference path="./node_modules/@figma/plugin-typings/index.d.ts" />
-const NUMERIC_VAR_FIELDS = [
-    "fontSize",
-    "lineHeight",
-    "letterSpacing",
-    "paragraphSpacing",
-    "paragraphIndent",
-];
-const TEXT_CASE_VALUES = [
-    "ORIGINAL",
-    "UPPER",
-    "LOWER",
-    "TITLE",
-    "SMALL_CAPS",
-    "SMALL_CAPS_FORCED",
-];
-const TEXT_DECORATION_VALUES = [
-    "NONE",
-    "UNDERLINE",
-    "STRIKETHROUGH",
-];
-const LEADING_TRIM_VALUES = ["CAP_HEIGHT", "NONE"];
+/// <reference path="../../node_modules/@figma/plugin-typings/index.d.ts" />
 function postError(message) {
     const msg = { type: "error", message };
     figma.ui.postMessage(msg);
@@ -216,7 +195,7 @@ function validatePluginMessage(raw) {
     }
     throw new Error(`Unsupported plugin message type "${raw.type}"`);
 }
-function snapshotStyle(style) {
+function toTextStyleViewModel(style) {
     const boundVars = {};
     const rawBv = style.boundVariables;
     if (rawBv) {
@@ -252,7 +231,7 @@ async function loadStyles() {
             figma.variables.getLocalVariablesAsync("FLOAT"),
             figma.variables.getLocalVariableCollectionsAsync(),
         ]);
-        const snapshots = styles.map(snapshotStyle);
+        const textStyleViewModels = styles.map(toTextStyleViewModel);
         const fonts = {};
         for (const font of availableFonts) {
             const { family, style } = font.fontName;
@@ -271,7 +250,7 @@ async function loadStyles() {
         }));
         const msg = {
             type: "styles-loaded",
-            styles: snapshots,
+            styles: textStyleViewModels,
             fonts,
             variables,
         };

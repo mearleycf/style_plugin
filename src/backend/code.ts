@@ -1,42 +1,8 @@
-/// <reference path="./node_modules/@figma/plugin-typings/index.d.ts" />
-
-// Plugin controller — runs in Figma's sandbox (no DOM access)
-
-// Fields we expose variable binding for in the UI
-type NumericVarField =
-  | "fontSize"
-  | "lineHeight"
-  | "letterSpacing"
-  | "paragraphSpacing"
-  | "paragraphIndent";
-
-interface StyleSnapshot {
-  id: string;
-  name: string;
-  fontSize: number;
-  fontName: FontName;
-  letterSpacing: LetterSpacing;
-  lineHeight: LineHeight;
-  paragraphIndent: number;
-  paragraphSpacing: number;
-  textCase: TextCase;
-  textDecoration: TextDecoration;
-  leadingTrim: LeadingTrim;
-  listSpacing: number;
-  hangingPunctuation: boolean;
-  hangingList: boolean;
-  boundVars: Partial<Record<NumericVarField, string>>; // field → variable ID
-}
-
-interface VariableInfo {
-  id: string;
-  name: string;
-  collectionName: string;
-}
+/// <reference path="../../node_modules/@figma/plugin-typings/index.d.ts" />
 
 interface PendingEdit {
   id: string;
-  changes: Partial<Omit<StyleSnapshot, "id" | "boundVars">>;
+  changes: Partial<Omit<TextStyleViewModel, "id" | "boundVars">>;
   varBindings: Partial<Record<NumericVarField, string | null>>;
   // string = bind to this variable ID, null = unbind
 }
@@ -48,10 +14,6 @@ interface ApplyResult {
   error?: string;
 }
 
-interface FontMap {
-  [family: string]: string[];
-}
-
 type PluginMessage =
   | { type: "load-styles" }
   | { type: "apply-changes"; edits: PendingEdit[] }
@@ -60,42 +22,17 @@ type PluginMessage =
 type UIMessage =
   | {
       type: "styles-loaded";
-      styles: StyleSnapshot[];
+      styles: TextStyleViewModel[];
       fonts: FontMap;
       variables: VariableInfo[];
     }
   | { type: "apply-results"; results: ApplyResult[] }
   | { type: "error"; message: string };
 
-const NUMERIC_VAR_FIELDS: NumericVarField[] = [
-  "fontSize",
-  "lineHeight",
-  "letterSpacing",
-  "paragraphSpacing",
-  "paragraphIndent",
-];
-
 type ResolvedVarBinding = {
   field: NumericVarField;
   variable: Variable | null;
 };
-
-const TEXT_CASE_VALUES: readonly TextCase[] = [
-  "ORIGINAL",
-  "UPPER",
-  "LOWER",
-  "TITLE",
-  "SMALL_CAPS",
-  "SMALL_CAPS_FORCED",
-];
-
-const TEXT_DECORATION_VALUES: readonly TextDecoration[] = [
-  "NONE",
-  "UNDERLINE",
-  "STRIKETHROUGH",
-];
-
-const LEADING_TRIM_VALUES: readonly LeadingTrim[] = ["CAP_HEIGHT", "NONE"];
 
 function postError(message: string): void {
   const msg: UIMessage = { type: "error", message };
@@ -355,7 +292,7 @@ function validatePluginMessage(raw: unknown): PluginMessage {
   throw new Error(`Unsupported plugin message type "${raw.type}"`);
 }
 
-function snapshotStyle(style: TextStyle): StyleSnapshot {
+function toTextStyleViewModel(style: TextStyle): TextStyleViewModel {
   const boundVars: Partial<Record<NumericVarField, string>> = {};
   const rawBv = style.boundVariables;
   if (rawBv) {
@@ -393,7 +330,7 @@ async function loadStyles(): Promise<void> {
         figma.variables.getLocalVariableCollectionsAsync(),
       ]);
 
-    const snapshots = styles.map(snapshotStyle);
+    const textStyleViewModels = styles.map(toTextStyleViewModel);
 
     const fonts: FontMap = {};
     for (const font of availableFonts) {
@@ -415,7 +352,7 @@ async function loadStyles(): Promise<void> {
 
     const msg: UIMessage = {
       type: "styles-loaded",
-      styles: snapshots,
+      styles: textStyleViewModels,
       fonts,
       variables,
     };
