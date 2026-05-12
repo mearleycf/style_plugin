@@ -1,6 +1,6 @@
 /// <reference path="../../node_modules/@figma/plugin-typings/index.d.ts" />
 
-import type { ZodError, ZodIssue } from "zod";
+import type { ZodError } from "zod";
 import type {
   LetterSpacing,
   LineHeight,
@@ -23,11 +23,16 @@ import {
 
 import { PluginMessageSchema } from "../shared/plugin-message-schemas";
 
+// This validation issue helper will move to message-errors.ts.
+type ZodErrorIssue = ZodError["issues"][number];
+
+// This UI message posting helper will move to ui-messages.ts.
 function postError(message: string): void {
   const msg: UIMessage = { type: "error", message };
   figma.ui.postMessage(msg);
 }
 
+// This plugin message validation error formatter will move to message-errors.ts.
 function formatPluginMessageError(error: ZodError): string {
   const issue = error.issues[0];
   if (!issue) return "Invalid plugin message";
@@ -66,8 +71,9 @@ function formatPluginMessageError(error: ZodError): string {
   return "Invalid plugin message";
 }
 
+// This change range validation error formatter will move to message-errors.ts.
 function formatChangeRangeError(
-  issue: ZodIssue,
+  issue: ZodErrorIssue,
   editIndex: number,
   field: string,
   nestedField: PropertyKey | undefined,
@@ -83,6 +89,7 @@ function formatChangeRangeError(
   return `Edit ${editIndex} ${field} must be greater than or equal to 0`;
 }
 
+// This TextStyle-to-view-model mapper will move to text-style-view-model.ts.
 function toTextStyleViewModel(style: TextStyle): TextStyleViewModel {
   const boundVars: Partial<Record<SupportedVariableBindingField, string>> = {};
   const rawBv = style.boundVariables;
@@ -111,6 +118,7 @@ function toTextStyleViewModel(style: TextStyle): TextStyleViewModel {
   };
 }
 
+// This load-styles command handler will move to load-styles.ts.
 async function loadStyles(): Promise<void> {
   try {
     const [styles, availableFonts, localVariables, localCollections] =
@@ -157,6 +165,7 @@ async function loadStyles(): Promise<void> {
   }
 }
 
+// This apply-changes command handler will move to apply-changes.ts.
 async function applyChanges(edits: PendingEdit[]): Promise<void> {
   const results: ApplyResult[] = [];
 
@@ -179,6 +188,7 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
       const c = edit.changes;
       const resolvedVarBindings = await preflightEdit(textStyle, edit);
 
+      // This field assignment block will move to text-style-assignments.ts.
       if (c.name !== undefined) textStyle.name = c.name;
       if (c.fontSize !== undefined) textStyle.fontSize = c.fontSize;
       if (c.fontName !== undefined) textStyle.fontName = c.fontName;
@@ -193,7 +203,7 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
       if (c.hangingPunctuation !== undefined) textStyle.hangingPunctuation = c.hangingPunctuation;
       if (c.hangingList !== undefined) textStyle.hangingList = c.hangingList;
 
-      // Handle variable bindings
+      // This resolved variable binding application will move to variable-bindings.ts.
       for (const binding of resolvedVarBindings) {
         textStyle.setBoundVariable(binding.field, binding.variable);
       }
@@ -213,6 +223,7 @@ async function applyChanges(edits: PendingEdit[]): Promise<void> {
   figma.ui.postMessage(msg);
 }
 
+// This edit preflight and variable binding resolver will move to variable-bindings.ts.
 async function preflightEdit(
   textStyle: TextStyle,
   edit: PendingEdit,
@@ -241,6 +252,7 @@ async function preflightEdit(
   return resolvedVarBindings;
 }
 
+// This validated message router will move to message-router.ts.
 function handlePluginMessage(msg: PluginMessage): void {
   if (msg.type === "load-styles") {
     loadStyles();
@@ -255,12 +267,14 @@ function handlePluginMessage(msg: PluginMessage): void {
   figma.ui.resize(msg.width, msg.height);
 }
 
+// This Figma UI bootstrap stays in code.ts as the plugin entrypoint.
 figma.showUI(__html__, {
   width: 1440,
   height: 600,
   title: "Bulk Typography Style Editor",
 });
 
+// This raw inbound message adapter stays in code.ts until message-router.ts owns routing.
 figma.ui.onmessage = (raw: unknown) => {
   try {
     const result = PluginMessageSchema.safeParse(raw);
