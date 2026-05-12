@@ -113,10 +113,6 @@ export type {
  * }
  */
 
-type EditorType = PluginAPI["editorType"];
-type Viewport = PluginAPI["viewport"];
-
-
 // ---- dependency injection -- functions typed from API -------------------------------
 
 type GetVariableByIdAsync = VariablesAPI["getVariableByIdAsync"];

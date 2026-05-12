@@ -1,9 +1,17 @@
 import type { TextCase } from "../shared/figma-types";
-import type { Font } from "../shared/figma-types";
 import { TextCaseSchema } from "../shared/text-style-schemas";
 import type { FontStylesByFamily } from "../shared/text-style-types";
 
-export function groupStylesByFamily(fonts: Font[]): FontStylesByFamily {
+type FontSource = {
+  fontName: {
+    family: string;
+    style: string;
+  };
+};
+
+export function groupStylesByFamily(
+  fonts: readonly FontSource[],
+): FontStylesByFamily {
   const stylesByFamily: FontStylesByFamily = {};
 
   for (const font of fonts) {

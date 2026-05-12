@@ -36,6 +36,195 @@
       __defProp(target, name, { get: all[name], enumerable: true });
   };
 
+  // src/backend/message-errors.ts
+  function formatPluginMessageError(error51) {
+    const issue2 = error51.issues[0];
+    if (!issue2) return "Invalid plugin message";
+    const [firstPath, editIndex, section, field, nestedField] = issue2.path;
+    if (firstPath === "width" || firstPath === "height") {
+      if (issue2.code === "invalid_type") {
+        return "resize message must include numeric width and height";
+      }
+      if (issue2.code === "too_small") {
+        return "resize message width and height must be positive numbers";
+      }
+    }
+    if (issue2.code === "invalid_key" && firstPath === "edits" && typeof editIndex === "number" && section === "varBindings" && typeof field === "string") {
+      return `Edit ${editIndex} includes unsupported variable binding field "${field}"`;
+    }
+    if (issue2.code === "too_small" && firstPath === "edits" && typeof editIndex === "number" && section === "changes" && typeof field === "string") {
+      return formatChangeRangeError(issue2, editIndex, field, nestedField);
+    }
+    return "Invalid plugin message";
+  }
+  function formatChangeRangeError(issue2, editIndex, field, nestedField) {
+    if (field === "lineHeight" && nestedField === "value") {
+      return `Edit ${editIndex} lineHeight value must be greater than 0`;
+    }
+    if (issue2.code === "too_small" && !issue2.inclusive) {
+      return `Edit ${editIndex} ${field} must be greater than 0`;
+    }
+    return `Edit ${editIndex} ${field} must be greater than or equal to 0`;
+  }
+
+  // src/backend/text-style-assignments.ts
+  var TEXT_STYLE_ASSIGNMENTS = {
+    name: {
+      apply(textStyle, value) {
+        textStyle.name = value;
+      }
+    },
+    fontSize: {
+      apply(textStyle, value) {
+        textStyle.fontSize = value;
+      }
+    },
+    fontName: {
+      apply(textStyle, value) {
+        textStyle.fontName = value;
+      }
+    },
+    letterSpacing: {
+      apply(textStyle, value) {
+        textStyle.letterSpacing = value;
+      }
+    },
+    lineHeight: {
+      apply(textStyle, value) {
+        textStyle.lineHeight = value;
+      }
+    },
+    paragraphIndent: {
+      apply(textStyle, value) {
+        textStyle.paragraphIndent = value;
+      }
+    },
+    paragraphSpacing: {
+      apply(textStyle, value) {
+        textStyle.paragraphSpacing = value;
+      }
+    },
+    textCase: {
+      apply(textStyle, value) {
+        textStyle.textCase = value;
+      }
+    },
+    textDecoration: {
+      apply(textStyle, value) {
+        textStyle.textDecoration = value;
+      }
+    },
+    leadingTrim: {
+      apply(textStyle, value) {
+        textStyle.leadingTrim = value;
+      }
+    },
+    listSpacing: {
+      apply(textStyle, value) {
+        textStyle.listSpacing = value;
+      }
+    },
+    hangingPunctuation: {
+      apply(textStyle, value) {
+        textStyle.hangingPunctuation = value;
+      }
+    },
+    hangingList: {
+      apply(textStyle, value) {
+        textStyle.hangingList = value;
+      }
+    }
+  };
+  var TEXT_STYLE_CHANGE_FIELDS = Object.keys(
+    TEXT_STYLE_ASSIGNMENTS
+  );
+  function applyTextStyleChanges(textStyle, changes) {
+    for (const field of TEXT_STYLE_CHANGE_FIELDS) {
+      applyTextStyleChange(textStyle, changes, field);
+    }
+  }
+  function applyTextStyleChange(textStyle, changes, field) {
+    const value = changes[field];
+    if (value === void 0) return;
+    const assignment = TEXT_STYLE_ASSIGNMENTS[field];
+    assignment.apply(textStyle, value);
+  }
+
+  // src/backend/variable-bindings.ts
+  async function preflightEdit(textStyle, edit) {
+    await loadFontForEdit(textStyle, edit);
+    return resolveVariableBindings(edit.varBindings);
+  }
+  async function loadFontForEdit(textStyle, edit) {
+    var _a5;
+    const fontToLoad = (_a5 = edit.changes.fontName) != null ? _a5 : textStyle.fontName;
+    await figma.loadFontAsync(fontToLoad);
+  }
+  async function resolveVariableBindings(varBindings) {
+    const resolvedVarBindings = [];
+    for (const [field, variableId] of Object.entries(varBindings)) {
+      if (variableId === null) {
+        resolvedVarBindings.push({ field, variable: null });
+        continue;
+      }
+      const variable = await figma.variables.getVariableByIdAsync(variableId);
+      if (!variable) throw new Error(`Variable not found: ${variableId}`);
+      if (variable.resolvedType !== "FLOAT") {
+        throw new Error(`Variable ${variableId} is not a FLOAT variable`);
+      }
+      resolvedVarBindings.push({ field, variable });
+    }
+    return resolvedVarBindings;
+  }
+  function applyResolvedVariableBindings(textStyle, resolvedVarBindings) {
+    for (const binding of resolvedVarBindings) {
+      textStyle.setBoundVariable(binding.field, binding.variable);
+    }
+  }
+
+  // src/backend/ui-messages.ts
+  function postUiMessage(msg) {
+    figma.ui.postMessage(msg);
+  }
+  function postError(message) {
+    const msg = { type: "error", message };
+    postUiMessage(msg);
+  }
+
+  // src/backend/apply-changes.ts
+  async function applyChanges(edits) {
+    const results = [];
+    for (const edit of edits) {
+      let styleName = edit.id;
+      try {
+        const style = await figma.getStyleByIdAsync(edit.id);
+        if (!style || style.type !== "TEXT") {
+          results.push({
+            id: edit.id,
+            name: styleName,
+            ok: false,
+            error: "Style not found or is not a text style"
+          });
+          continue;
+        }
+        styleName = style.name;
+        const resolvedVarBindings = await preflightEdit(style, edit);
+        applyTextStyleChanges(style, edit.changes);
+        applyResolvedVariableBindings(style, resolvedVarBindings);
+        results.push({ id: edit.id, name: styleName, ok: true });
+      } catch (err) {
+        results.push({
+          id: edit.id,
+          name: styleName,
+          ok: false,
+          error: err instanceof Error ? err.message : String(err)
+        });
+      }
+    }
+    const msg = { type: "apply-results", results };
+    postUiMessage(msg);
+  }
+
   // src/shared/text-style-types.ts
   var SUPPORTED_VARIABLE_BINDING_FIELDS = [
     "fontSize",
@@ -61,6 +250,35 @@
     "CAP_HEIGHT",
     "NONE"
   ];
+
+  // src/backend/text-style-view-model.ts
+  function toTextStyleViewModel(style) {
+    const boundVars = {};
+    const rawBoundVariables = style.boundVariables;
+    if (rawBoundVariables) {
+      for (const field of SUPPORTED_VARIABLE_BINDING_FIELDS) {
+        const alias = rawBoundVariables[field];
+        if (alias) boundVars[field] = alias.id;
+      }
+    }
+    return {
+      id: style.id,
+      name: style.name,
+      fontSize: style.fontSize,
+      fontName: { family: style.fontName.family, style: style.fontName.style },
+      letterSpacing: __spreadValues({}, style.letterSpacing),
+      lineHeight: __spreadValues({}, style.lineHeight),
+      paragraphIndent: style.paragraphIndent,
+      paragraphSpacing: style.paragraphSpacing,
+      textCase: style.textCase,
+      textDecoration: style.textDecoration,
+      leadingTrim: style.leadingTrim,
+      listSpacing: style.listSpacing,
+      hangingPunctuation: style.hangingPunctuation,
+      hangingList: style.hangingList,
+      boundVars
+    };
+  }
 
   // node_modules/zod/v4/classic/external.js
   var external_exports = {};
@@ -14731,6 +14949,63 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
     boundVars: BoundVarsSchema
   });
 
+  // src/backend/utils.ts
+  function groupStylesByFamily(fonts) {
+    var _a5;
+    const stylesByFamily = {};
+    for (const font of fonts) {
+      const { family, style } = font.fontName;
+      (_a5 = stylesByFamily[family]) != null ? _a5 : stylesByFamily[family] = [];
+      stylesByFamily[family].push(style);
+    }
+    return stylesByFamily;
+  }
+
+  // src/backend/load-styles.ts
+  async function loadStyles() {
+    try {
+      const [styles, availableFonts, localVariables, localCollections] = await Promise.all([
+        figma.getLocalTextStylesAsync(),
+        figma.listAvailableFontsAsync(),
+        figma.variables.getLocalVariablesAsync("FLOAT"),
+        figma.variables.getLocalVariableCollectionsAsync()
+      ]);
+      const collectionNames = {};
+      for (const col of localCollections) {
+        collectionNames[col.id] = col.name;
+      }
+      const variables = localVariables.map((v) => ({
+        id: v.id,
+        name: v.name,
+        collectionName: collectionNames[v.variableCollectionId] || ""
+      }));
+      const msg = {
+        type: "styles-loaded",
+        styles: styles.map(toTextStyleViewModel),
+        fonts: groupStylesByFamily(availableFonts),
+        variables
+      };
+      postUiMessage(msg);
+    } catch (err) {
+      postError(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  // src/backend/message-router.ts
+  function handlePluginMessage(msg) {
+    switch (msg.type) {
+      case "load-styles":
+        void loadStyles();
+        return;
+      case "apply-changes":
+        void applyChanges(msg.edits);
+        return;
+      case "resize":
+        figma.ui.resize(msg.width, msg.height);
+        return;
+    }
+  }
+
   // src/shared/plugin-message-schemas.ts
   var TextStyleChangesSchema = TextStyleViewModelSchema.omit({
     id: true,
@@ -14785,183 +15060,6 @@ Set the \`cycles\` parameter to \`"ref"\` to resolve cyclical schemas with defs.
   });
 
   // src/backend/code.ts
-  function postError(message) {
-    const msg = { type: "error", message };
-    figma.ui.postMessage(msg);
-  }
-  function formatPluginMessageError(error51) {
-    const issue2 = error51.issues[0];
-    if (!issue2) return "Invalid plugin message";
-    const [firstPath, editIndex, section, field, nestedField] = issue2.path;
-    if (firstPath === "width" || firstPath === "height") {
-      if (issue2.code === "invalid_type") {
-        return "resize message must include numeric width and height";
-      }
-      if (issue2.code === "too_small") {
-        return "resize message width and height must be positive numbers";
-      }
-    }
-    if (issue2.code === "invalid_key" && firstPath === "edits" && typeof editIndex === "number" && section === "varBindings" && typeof field === "string") {
-      return `Edit ${editIndex} includes unsupported variable binding field "${field}"`;
-    }
-    if (issue2.code === "too_small" && firstPath === "edits" && typeof editIndex === "number" && section === "changes" && typeof field === "string") {
-      return formatChangeRangeError(issue2, editIndex, field, nestedField);
-    }
-    return "Invalid plugin message";
-  }
-  function formatChangeRangeError(issue2, editIndex, field, nestedField) {
-    if (field === "lineHeight" && nestedField === "value") {
-      return `Edit ${editIndex} lineHeight value must be greater than 0`;
-    }
-    if (issue2.code === "too_small" && !issue2.inclusive) {
-      return `Edit ${editIndex} ${field} must be greater than 0`;
-    }
-    return `Edit ${editIndex} ${field} must be greater than or equal to 0`;
-  }
-  function toTextStyleViewModel(style) {
-    const boundVars = {};
-    const rawBv = style.boundVariables;
-    if (rawBv) {
-      for (const field of SUPPORTED_VARIABLE_BINDING_FIELDS) {
-        const alias = rawBv[field];
-        if (alias) boundVars[field] = alias.id;
-      }
-    }
-    return {
-      id: style.id,
-      name: style.name,
-      fontSize: style.fontSize,
-      fontName: { family: style.fontName.family, style: style.fontName.style },
-      letterSpacing: __spreadValues({}, style.letterSpacing),
-      lineHeight: __spreadValues({}, style.lineHeight),
-      paragraphIndent: style.paragraphIndent,
-      paragraphSpacing: style.paragraphSpacing,
-      textCase: style.textCase,
-      textDecoration: style.textDecoration,
-      leadingTrim: style.leadingTrim,
-      listSpacing: style.listSpacing,
-      hangingPunctuation: style.hangingPunctuation,
-      hangingList: style.hangingList,
-      boundVars
-    };
-  }
-  async function loadStyles() {
-    try {
-      const [styles, availableFonts, localVariables, localCollections] = await Promise.all([
-        figma.getLocalTextStylesAsync(),
-        figma.listAvailableFontsAsync(),
-        figma.variables.getLocalVariablesAsync("FLOAT"),
-        figma.variables.getLocalVariableCollectionsAsync()
-      ]);
-      const textStyleViewModels = styles.map(toTextStyleViewModel);
-      const fonts = {};
-      for (const font of availableFonts) {
-        const { family, style } = font.fontName;
-        if (!fonts[family]) fonts[family] = [];
-        fonts[family].push(style);
-      }
-      const collectionNames = {};
-      for (const col of localCollections) {
-        collectionNames[col.id] = col.name;
-      }
-      const variables = localVariables.map((v) => ({
-        id: v.id,
-        name: v.name,
-        collectionName: collectionNames[v.variableCollectionId] || ""
-      }));
-      const msg = {
-        type: "styles-loaded",
-        styles: textStyleViewModels,
-        fonts,
-        variables
-      };
-      figma.ui.postMessage(msg);
-    } catch (err) {
-      const msg = {
-        type: "error",
-        message: err instanceof Error ? err.message : String(err)
-      };
-      figma.ui.postMessage(msg);
-    }
-  }
-  async function applyChanges(edits) {
-    const results = [];
-    for (const edit of edits) {
-      let styleName = edit.id;
-      try {
-        const style = await figma.getStyleByIdAsync(edit.id);
-        if (!style || style.type !== "TEXT") {
-          results.push({
-            id: edit.id,
-            name: styleName,
-            ok: false,
-            error: "Style not found or is not a text style"
-          });
-          continue;
-        }
-        const textStyle = style;
-        styleName = textStyle.name;
-        const c = edit.changes;
-        const resolvedVarBindings = await preflightEdit(textStyle, edit);
-        if (c.name !== void 0) textStyle.name = c.name;
-        if (c.fontSize !== void 0) textStyle.fontSize = c.fontSize;
-        if (c.fontName !== void 0) textStyle.fontName = c.fontName;
-        if (c.letterSpacing !== void 0) textStyle.letterSpacing = c.letterSpacing;
-        if (c.lineHeight !== void 0) textStyle.lineHeight = c.lineHeight;
-        if (c.paragraphIndent !== void 0) textStyle.paragraphIndent = c.paragraphIndent;
-        if (c.paragraphSpacing !== void 0) textStyle.paragraphSpacing = c.paragraphSpacing;
-        if (c.textCase !== void 0) textStyle.textCase = c.textCase;
-        if (c.textDecoration !== void 0) textStyle.textDecoration = c.textDecoration;
-        if (c.leadingTrim !== void 0) textStyle.leadingTrim = c.leadingTrim;
-        if (c.listSpacing !== void 0) textStyle.listSpacing = c.listSpacing;
-        if (c.hangingPunctuation !== void 0) textStyle.hangingPunctuation = c.hangingPunctuation;
-        if (c.hangingList !== void 0) textStyle.hangingList = c.hangingList;
-        for (const binding of resolvedVarBindings) {
-          textStyle.setBoundVariable(binding.field, binding.variable);
-        }
-        results.push({ id: edit.id, name: styleName, ok: true });
-      } catch (err) {
-        results.push({
-          id: edit.id,
-          name: styleName,
-          ok: false,
-          error: err instanceof Error ? err.message : String(err)
-        });
-      }
-    }
-    const msg = { type: "apply-results", results };
-    figma.ui.postMessage(msg);
-  }
-  async function preflightEdit(textStyle, edit) {
-    var _a5;
-    const fontToLoad = (_a5 = edit.changes.fontName) != null ? _a5 : textStyle.fontName;
-    await figma.loadFontAsync(fontToLoad);
-    const resolvedVarBindings = [];
-    for (const [field, variableId] of Object.entries(edit.varBindings)) {
-      if (variableId === null) {
-        resolvedVarBindings.push({ field, variable: null });
-        continue;
-      }
-      const variable = await figma.variables.getVariableByIdAsync(variableId);
-      if (!variable) throw new Error(`Variable not found: ${variableId}`);
-      if (variable.resolvedType !== "FLOAT") {
-        throw new Error(`Variable ${variableId} is not a FLOAT variable`);
-      }
-      resolvedVarBindings.push({ field, variable });
-    }
-    return resolvedVarBindings;
-  }
-  function handlePluginMessage(msg) {
-    if (msg.type === "load-styles") {
-      loadStyles();
-      return;
-    }
-    if (msg.type === "apply-changes") {
-      applyChanges(msg.edits);
-      return;
-    }
-    figma.ui.resize(msg.width, msg.height);
-  }
   figma.showUI(__html__, {
     width: 1440,
     height: 600,
