@@ -686,6 +686,10 @@
     const viewModel = styles.find((s) => s.id === id);
     return viewModel ? (_a = getViewModelBoundVars(viewModel)[field]) != null ? _a : null : null;
   }
+  function getEditedValue(id, field) {
+    const e = edits.get(id);
+    return e && field in e.changes ? e.changes[field] : null;
+  }
   function markDirty(id) {
     const row = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
     if (row) {
