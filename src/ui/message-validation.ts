@@ -1,32 +1,33 @@
-const BINDABLE_VAR_FIELDS = new Set(['fontSize','lineHeight','letterSpacing','paragraphSpacing','paragraphIndent']);
+// @ts-nocheck
+export const BINDABLE_VAR_FIELDS = new Set(['fontSize','lineHeight','letterSpacing','paragraphSpacing','paragraphIndent']);
 
-function isRecord(value) {
+export function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
-function isFiniteNumber(value) {
+export function isFiniteNumber(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-function isFontName(value) {
+export function isFontName(value) {
   return isRecord(value) && typeof value.family === 'string' && typeof value.style === 'string';
 }
 
-function isUnitValue(value, units) {
+export function isUnitValue(value, units) {
   if (!isRecord(value) || typeof value.unit !== 'string' || !units.includes(value.unit)) return false;
   if (value.unit === 'AUTO') return true;
   return isFiniteNumber(value.value);
 }
 
-function isBindableVarField(field) {
+export function isBindableVarField(field) {
   return BINDABLE_VAR_FIELDS.has(field);
 }
 
-function getViewModelBoundVars(viewModel) {
+export function getViewModelBoundVars(viewModel) {
   return isRecord(viewModel && viewModel.boundVars) ? viewModel.boundVars : {};
 }
 
-function validateTextStyleViewModel(value, index) {
+export function validateTextStyleViewModel(value, index) {
   if (!isRecord(value)) throw new Error('styles[' + index + '] must be an object');
   if (typeof value.id !== 'string' || !value.id) throw new Error('styles[' + index + '].id must be a string');
   if (typeof value.name !== 'string') throw new Error('styles[' + index + '].name must be a string');
@@ -65,7 +66,7 @@ function validateTextStyleViewModel(value, index) {
   };
 }
 
-function validateFontMap(value) {
+export function validateFontMap(value) {
   if (!isRecord(value)) return {};
   const nextFonts = {};
   Object.entries(value).forEach(([family, stylesForFamily]) => {
@@ -76,7 +77,7 @@ function validateFontMap(value) {
   return nextFonts;
 }
 
-function validateVariableInfo(value, index) {
+export function validateVariableInfo(value, index) {
   if (!isRecord(value)) throw new Error('variables[' + index + '] must be an object');
   if (typeof value.id !== 'string' || !value.id) throw new Error('variables[' + index + '].id must be a string');
   if (typeof value.name !== 'string') throw new Error('variables[' + index + '].name must be a string');
@@ -87,7 +88,7 @@ function validateVariableInfo(value, index) {
   };
 }
 
-function validateStylesLoadedMessage(msg) {
+export function validateStylesLoadedMessage(msg) {
   if (!Array.isArray(msg.styles)) throw new Error('styles-loaded message must include a styles array');
   return {
     styles: msg.styles.map(validateTextStyleViewModel),
@@ -96,7 +97,7 @@ function validateStylesLoadedMessage(msg) {
   };
 }
 
-function validateApplyResult(value, index) {
+export function validateApplyResult(value, index) {
   if (!isRecord(value)) throw new Error('results[' + index + '] must be an object');
   if (typeof value.id !== 'string' || !value.id) throw new Error('results[' + index + '].id must be a string');
   if (typeof value.ok !== 'boolean') throw new Error('results[' + index + '].ok must be a boolean');
@@ -108,7 +109,7 @@ function validateApplyResult(value, index) {
   };
 }
 
-function validateApplyResultsMessage(msg) {
+export function validateApplyResultsMessage(msg) {
   if (!Array.isArray(msg.results)) throw new Error('apply-results message must include a results array');
   return msg.results.map(validateApplyResult);
 }

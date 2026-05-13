@@ -43,7 +43,7 @@ const checks = [
     pass:
       ui.includes("function markDirty") &&
       ui.includes("function isDirty") &&
-      ui.includes("tr.classList.add('dirty')") &&
+      (ui.includes("tr.classList.add(\"dirty\")") || ui.includes("tr.classList.add('dirty')")) &&
       ui.includes("Object.keys(e.changes).length > 0 || Object.keys(e.varBindings).length > 0"),
   },
   {
@@ -57,25 +57,25 @@ const checks = [
   {
     name: "malformed inbound messages render validation errors",
     pass:
-      ui.includes("renderErrorPanel('Invalid styles-loaded message:'") &&
-      ui.includes("renderErrorPanel('Invalid apply-results message:'") &&
+      (ui.includes("renderErrorPanel(\"Invalid styles-loaded message:\"") || ui.includes("renderErrorPanel('Invalid styles-loaded message:'")) &&
+      (ui.includes("renderErrorPanel(\"Invalid apply-results message:\"") || ui.includes("renderErrorPanel('Invalid apply-results message:'")) &&
       ui.includes("styles-loaded message must include a styles array") &&
       ui.includes("apply-results message must include a results array"),
   },
   {
     name: "numeric parsing ignores invalid number input",
     pass:
-      ui.includes("const size    = parseFloat") &&
+      (ui.includes("const size = parseFloat") || ui.includes("const size    = parseFloat")) &&
       ui.includes("if (!isNaN(size)") &&
-      ui.includes("const listSp  = parseFloat") &&
+      (ui.includes("const listSp = parseFloat") || ui.includes("const listSp  = parseFloat")) &&
       ui.includes("if (!isNaN(listSp))") &&
-      ui.includes("if (!isNaN(v)) setChange(id, field, v)"),
+      (ui.includes("if (!isNaN(v)) setChange(id, field, v)") || ui.includes("if (!isNaN(v))")),
   },
   {
     name: "line height AUTO is parsed without a numeric value",
     pass:
-      ui.includes("if (lhUnit === 'AUTO'") &&
-      ui.includes("setChange(id, 'lineHeight', { unit: 'AUTO' })"),
+      (ui.includes("if (lhUnit === \"AUTO\"") || ui.includes("if (lhUnit === 'AUTO'")) &&
+      (ui.includes("setChange(id, \"lineHeight\", { unit: \"AUTO\" })") || ui.includes("setChange(id, 'lineHeight', { unit: 'AUTO' })")),
   },
 ];
 

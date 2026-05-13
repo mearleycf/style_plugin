@@ -1,3 +1,8 @@
+// @ts-nocheck
+import { clearElement } from './dom-utils';
+import { isBindableVarField } from './message-validation';
+import { CELL_INPUT_CLASSES, DIRTY_ROW_CLASSES, TABLE_ROW_CLASSES, applyStatus, edits, fontMap, getEffectiveVar, isDirty, makeFontNameForFamily, openVarPicker, refreshRow, setChange, updateBulkBar, updateToolbar, variableMap } from './app';
+
 // ─── cell builders ─────────────────────────────────────────────────────────────────────────────
 function makeVbCell(id, field, numericValue, isBound) {
   const wrap = document.createElement('div');
@@ -107,7 +112,7 @@ function makeSelect(opts, current, onChange) {
 }
 
 // ─── row builder ──────────────────────────────────────────────────────────────────────────────
-function buildRow(viewModel) {
+export function buildRow(viewModel) {
   const id = viewModel.id;
   const e = edits.get(id) || { changes:{}, varBindings:{} };
   const c = e.changes;
