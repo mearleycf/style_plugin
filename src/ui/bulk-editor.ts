@@ -1,5 +1,10 @@
+// @ts-nocheck
+import { clearElement } from './dom-utils';
+import { isBindableVarField } from './message-validation';
+import { bulkVarBindings, clearBulkVarBindings, openVarPicker, edits, getFontStyles, getValidStyleForFamily, hasBulkVarBinding, refreshRow, registerBulkBarUpdater, selectedIds, setChange, setVarBinding, styles, updateToolbar, renderTable, variableMap } from './app';
+
 // ─── bulk bar ─────────────────────────────────────────────────────────────────────────────────
-function updateBulkBar() {
+export function updateBulkBar() {
   const sel = selectedIds();
   const bar = document.getElementById('bulkBar');
   if (sel.length < 2) {
@@ -23,7 +28,7 @@ function updateBulkBar() {
   updateToolbar();
 }
 
-function populateBulkStyleOptions(family) {
+export function populateBulkStyleOptions(family) {
   const bbStyle = document.getElementById('bb-style');
   const previousStyle = bbStyle.value;
   clearElement(bbStyle);
@@ -59,7 +64,7 @@ document.getElementById('bulkBar').addEventListener('click', e => {
   }
 });
 
-function updateBulkVarChip(field) {
+export function updateBulkVarChip(field) {
   const chip = document.getElementById('bb-var-' + field);
   if (!chip) return;
   if (hasBulkVarBinding(field)) {
@@ -125,7 +130,9 @@ document.getElementById('applyBulkBtn').addEventListener('click', () => {
     }
   });
 
-  bulkVarBindings = {};
+  clearBulkVarBindings();
   ['fontSize','lineHeight','letterSpacing','paragraphSpacing','paragraphIndent'].forEach(updateBulkVarChip);
   renderTable();
 });
+
+registerBulkBarUpdater(updateBulkBar);

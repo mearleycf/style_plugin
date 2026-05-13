@@ -1,3 +1,9 @@
+// @ts-nocheck
+import { clearElement } from './dom-utils';
+import { isBindableVarField } from './message-validation';
+import { updateBulkVarChip } from './bulk-editor';
+import { bulkVarBindings, getEffectiveVar, registerVarPickerOpener, refreshRow, setVarBinding, variableList } from './app';
+
 // ─── variable picker ───────────────────────────────────────────────────────────────────────
 let vpState = null;
 
@@ -7,7 +13,7 @@ document.addEventListener('click', e => {
   }
 }, true);
 
-function openVarPicker(id, field, anchorEl, isBulk) {
+export function openVarPicker(id, field, anchorEl, isBulk) {
   if (!isBindableVarField(field)) return;
   vpState = { id, field, bulk: !!isBulk };
   const picker = document.getElementById('varPicker');
@@ -24,13 +30,13 @@ function openVarPicker(id, field, anchorEl, isBulk) {
   picker.style.left = left + 'px';
   document.getElementById('varPickerSearch').focus();
 }
-function closeVarPicker() {
+export function closeVarPicker() {
   const picker = document.getElementById('varPicker');
   picker.classList.add('hidden');
   picker.classList.remove('flex');
   vpState = null;
 }
-function renderVarPickerList(query) {
+export function renderVarPickerList(query) {
   const list = document.getElementById('varPickerList');
   clearElement(list);
   const q = query.toLowerCase();
@@ -81,3 +87,5 @@ document.getElementById('varPickerClear').addEventListener('click', () => {
   }
   closeVarPicker();
 });
+
+registerVarPickerOpener(openVarPicker);

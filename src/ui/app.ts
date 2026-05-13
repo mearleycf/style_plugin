@@ -1,5 +1,10 @@
+// @ts-nocheck
+import { clearElement, setChildren } from './dom-utils';
+import { validateApplyResultsMessage, validateStylesLoadedMessage, getViewModelBoundVars, isBindableVarField } from './message-validation';
+import { buildRow } from './table-rendering';
+
 // ─── column definitions ────────────────────────────────────────────
-const COLS = [
+export const COLS = [
   { key:'check',  label:'',           w:32,  resizable:false },
   { key:'state',  label:'',           w:28,  resizable:false },
   { key:'name',   label:'Name',       w:300, resizable:true  },
@@ -19,47 +24,71 @@ const COLS = [
 ];
 
 // ─── state ────────────────────────────────────────────────────────────────────────────────
-let colWidths = COLS.map(c => c.w);
-let styles = [];
-let fontMap = {};
-let variableList = [];
-let variableMap = new Map();
-let edits = new Map();
-let applyStatus = new Map();
+export let colWidths = COLS.map(c => c.w);
+export let styles = [];
+export let fontMap = {};
+export let variableList = [];
+export let variableMap = new Map();
+export let edits = new Map();
+export let applyStatus = new Map();
 let nameFilter = '';
-let bulkVarBindings = {};
+export let bulkVarBindings = {};
 let restoreAfterCanonicalReload = null;
 
-const CELL_INPUT_CLASSES = 'w-full rounded-sm border border-transparent bg-transparent px-[3px] py-px text-ui outline-none focus:border-brand-primary focus:bg-ui-surface';
-const TABLE_ROW_CLASSES = 'border-b border-ui-tertiary hover:bg-ui-hover';
-const DIRTY_ROW_CLASSES = ['bg-ui-dirty', 'hover:bg-ui-dirtyHover'];
+export const CELL_INPUT_CLASSES = 'w-full rounded-sm border border-transparent bg-transparent px-[3px] py-px text-ui outline-none focus:border-brand-primary focus:bg-ui-surface';
+export const TABLE_ROW_CLASSES = 'border-b border-ui-tertiary hover:bg-ui-hover';
+export const DIRTY_ROW_CLASSES = ['bg-ui-dirty', 'hover:bg-ui-dirtyHover'];
 
-function hasBulkVarBinding(field) {
+let updateBulkBarImpl = () => {};
+
+let openVarPickerImpl = () => {};
+
+export function registerVarPickerOpener(opener) {
+  openVarPickerImpl = opener;
+}
+
+export function openVarPicker(id, field, anchorEl, isBulk) {
+  openVarPickerImpl(id, field, anchorEl, isBulk);
+}
+
+export function registerBulkBarUpdater(updater) {
+  updateBulkBarImpl = updater;
+}
+
+export function updateBulkBar() {
+  updateBulkBarImpl();
+}
+
+export function clearBulkVarBindings() {
+  bulkVarBindings = {};
+}
+
+export function hasBulkVarBinding(field) {
   return Object.prototype.hasOwnProperty.call(bulkVarBindings, field);
 }
 
-function getFontStyles(family) {
+export function getFontStyles(family) {
   const stylesForFamily = fontMap[family];
   return Array.isArray(stylesForFamily) ? stylesForFamily : [];
 }
 
-function getValidStyleForFamily(family, preferredStyle) {
+export function getValidStyleForFamily(family, preferredStyle) {
   const stylesForFamily = getFontStyles(family);
   if (!stylesForFamily.length) return preferredStyle || '';
   return stylesForFamily.includes(preferredStyle) ? preferredStyle : stylesForFamily[0];
 }
 
-function makeFontNameForFamily(family, preferredStyle) {
+export function makeFontNameForFamily(family, preferredStyle) {
   return { family, style: getValidStyleForFamily(family, preferredStyle) };
 }
 
-function hideErrorPanel() {
+export function hideErrorPanel() {
   const ep = document.getElementById('errorPanel');
   ep.classList.add('hidden');
   setChildren(ep, []);
 }
 
-function renderErrorPanel(title, messages) {
+export function renderErrorPanel(title, messages) {
   const ep = document.getElementById('errorPanel');
   const strong = document.createElement('strong');
   strong.textContent = title;
@@ -73,12 +102,12 @@ function renderErrorPanel(title, messages) {
   ep.classList.remove('hidden');
 }
 
-function requestCanonicalReload() {
+export function requestCanonicalReload() {
   parent.postMessage({ pluginMessage: { type: 'load-styles' } }, '*');
 }
 
 // ─── header ─────────────────────────────────────────────────────────────────────────────
-function buildHeader() {
+export function buildHeader() {
   const cg = document.getElementById('colgroup');
   const hr = document.getElementById('headerRow');
   clearElement(cg);
@@ -140,13 +169,13 @@ function applyColWidths() {
 }
 
 // ─── name filter ─────────────────────────────────────────────────────────────────────────────
-function getFilteredStyles() {
+export function getFilteredStyles() {
   if (!nameFilter) return styles;
   const q = nameFilter.toLowerCase();
   return styles.filter(s => s.name.toLowerCase().includes(q));
 }
 
-function refreshNameGroupList() {
+export function refreshNameGroupList() {
   const dl = document.getElementById('nameGroupList');
   clearElement(dl);
   const groups = new Set();
@@ -181,31 +210,31 @@ document.getElementById('clearFilterBtn').addEventListener('click', () => {
 });
 
 // ─── edit helpers ───────────────────────────────────────────────────────────────────────────
-function getEdit(id) {
+export function getEdit(id) {
   if (!edits.has(id)) edits.set(id, { changes: {}, varBindings: {} });
   return edits.get(id);
 }
-function setChange(id, field, value) {
+export function setChange(id, field, value) {
   getEdit(id).changes[field] = value;
   markDirty(id);
 }
-function setVarBinding(id, field, variableId) {
+export function setVarBinding(id, field, variableId) {
   if (!isBindableVarField(field)) return;
   getEdit(id).varBindings[field] = variableId;
   markDirty(id);
 }
-function getEffectiveVar(id, field) {
+export function getEffectiveVar(id, field) {
   if (!isBindableVarField(field)) return null;
   const e = edits.get(id);
   if (e && field in e.varBindings) return e.varBindings[field];
   const viewModel = styles.find(s => s.id === id);
   return viewModel ? (getViewModelBoundVars(viewModel)[field] ?? null) : null;
 }
-function getEditedValue(id, field) {
+export function getEditedValue(id, field) {
   const e = edits.get(id);
   return e && field in e.changes ? e.changes[field] : null;
 }
-function markDirty(id) {
+export function markDirty(id) {
   const row = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
   if (row) {
     row.classList.add('dirty');
@@ -214,12 +243,12 @@ function markDirty(id) {
   }
   updateToolbar();
 }
-function isDirty(id) {
+export function isDirty(id) {
   const e = edits.get(id);
   if (!e) return false;
   return Object.keys(e.changes).length > 0 || Object.keys(e.varBindings).length > 0;
 }
-function updateStateDot(row, id) {
+export function updateStateDot(row, id) {
   const cell = row.querySelector('.state-cell');
   if (!cell) return;
   clearElement(cell);
@@ -238,16 +267,16 @@ function updateStateDot(row, id) {
 }
 
 // ─── selection ────────────────────────────────────────────────────────────────────────────────
-function selectedIds() {
+export function selectedIds() {
   return [...document.querySelectorAll('tbody tr input.row-check:checked')]
     .map(cb => cb.closest('tr').dataset.id);
 }
-function onSelectAll(e) {
+export function onSelectAll(e) {
   document.querySelectorAll('tbody tr input.row-check').forEach(cb => { cb.checked = e.target.checked; });
   updateBulkBar();
   updateToolbar();
 }
-function updateSelectAll() {
+export function updateSelectAll() {
   const all   = document.querySelectorAll('tbody tr input.row-check').length;
   const checked = document.querySelectorAll('tbody tr input.row-check:checked').length;
   const sa = document.getElementById('selectAll');
@@ -257,7 +286,7 @@ function updateSelectAll() {
 }
 
 // ─── toolbar ──────────────────────────────────────────────────────────────────────────────────
-function updateToolbar() {
+export function updateToolbar() {
   const dirtyCount = styles.filter(s => isDirty(s.id)).length;
   const sel = selectedIds();
   const filtered = getFilteredStyles();
@@ -270,7 +299,7 @@ function updateToolbar() {
 }
 
 // ─── render ───────────────────────────────────────────────────────────────────────────────────
-function renderTable() {
+export function renderTable() {
   const tbody = document.getElementById('tableBody');
   clearElement(tbody);
   getFilteredStyles().forEach(viewModel => tbody.appendChild(buildRow(viewModel)));
@@ -278,7 +307,7 @@ function renderTable() {
   requestResize();
 }
 
-function refreshRow(id) {
+export function refreshRow(id) {
   const viewModel = styles.find(s => s.id === id);
   if (!viewModel) return;
   const existing = document.querySelector('tr[data-id="' + CSS.escape(id) + '"]');
@@ -301,7 +330,7 @@ document.getElementById('reloadBtn').addEventListener('click', () => {
   requestCanonicalReload();
 });
 
-function sendApply() {
+export function sendApply() {
   const pending = styles.filter(s => isDirty(s.id));
   if (!pending.length) return;
   const editList = pending.map(s => {
@@ -378,7 +407,7 @@ window.onmessage = event => {
 
 // ─── auto-resize ────────────────────────────────────────────────────────────────────────
 let resizeRaf = null;
-function requestResize() {
+export function requestResize() {
   if (resizeRaf) cancelAnimationFrame(resizeRaf);
   resizeRaf = requestAnimationFrame(() => {
     const rows = document.querySelectorAll('#tableBody tr');
