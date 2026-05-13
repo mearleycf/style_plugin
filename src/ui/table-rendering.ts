@@ -1,7 +1,7 @@
 // @ts-nocheck
 import { clearElement } from './dom-utils';
 import { isBindableVarField } from './message-validation';
-import { CELL_INPUT_CLASSES, DIRTY_ROW_CLASSES, TABLE_ROW_CLASSES, applyStatus, edits, fontMap, getEffectiveVar, isDirty, makeFontNameForFamily, openVarPicker, refreshRow, setChange, updateBulkBar, updateToolbar, variableMap } from './app';
+import { CELL_INPUT_CLASSES, DIRTY_ROW_CLASSES, TABLE_ROW_CLASSES, applyStatus, edits, fontMap, getEditedValue, getEffectiveVar, isDirty, makeFontNameForFamily, openVarPicker, refreshRow, setChange, updateBulkBar, updateToolbar, variableMap } from './app';
 
 // ─── cell builders ─────────────────────────────────────────────────────────────────────────────
 function makeVbCell(id, field, numericValue, isBound) {
